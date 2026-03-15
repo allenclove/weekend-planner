@@ -1,10 +1,10 @@
 const CACHE_NAME = 'weekend-planner-v1'
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192x192.png',
-  '/icon-512x512.png'
+  '/weekend-planner/',
+  '/weekend-planner/index.html',
+  '/weekend-planner/manifest.json',
+  '/weekend-planner/icon-192x192.png',
+  '/weekend-planner/icon-512x512.png'
 ]
 
 // Install event - cache assets
