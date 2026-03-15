@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { WeekendPlan, DayPlan, Task, TaskCategory, Priority } from '@/types'
 import { savePlan, getPlanById } from './database'
+import { useRewardsStore } from './rewards'
 
 export const useCurrentPlanStore = defineStore('currentPlan', () => {
   // State
@@ -115,14 +116,20 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
       return
     }
 
+    const rewardsStore = useRewardsStore()
+    const wasCompleted = task.completed
     task.completed = !task.completed
 
     if (task.completed) {
       day.completedPoints += task.points
       currentPlan.value.completedPoints += task.points
+      // Add points to rewards store when task is completed
+      rewardsStore.addPoints(task.points)
     } else {
       day.completedPoints -= task.points
       currentPlan.value.completedPoints -= task.points
+      // Note: We don't deduct points from rewards when unchecking
+      // Points are earned permanently when tasks are completed
     }
 
     await persistPlan()
