@@ -2,27 +2,27 @@
 export interface TaskGroup {
   id: string
   name: string
-  tasks: string[]  // Array of task titles
+  tasks: string[]
 }
 
-// Simplified task (no category, priority is just number)
+// Simplified task without category, priority is a number
 export interface Task {
   id: string
   title: string
   note?: string
   completed: boolean
   groupId?: string
-  points: number      // Fixed at 10
-  priority: number    // Default 1
+  points: number
+  priority: number
 }
 
-// Simplified day plan
+// Simplified day plan without daily goal or reward
 export interface DayPlan {
-  date: string // ISO date string
+  date: string
   tasks: Task[]
 }
 
-// Weekend plan
+// Weekend plan containing multiple days
 export interface WeekendPlan {
   id: string
   startDate: string
@@ -30,7 +30,7 @@ export interface WeekendPlan {
   days: DayPlan[]
 }
 
-// Export/Import
+// Data export structure with task groups
 export interface ExportData {
   version: string
   exportDate: string
