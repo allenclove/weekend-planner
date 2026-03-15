@@ -30,7 +30,8 @@
       "Bash(grep -E \"^\\(export|//\\)\")",
       "Bash(gh repo:*)",
       "Bash(gh api:*)",
-      "Bash(gh run:*)"
+      "Bash(gh run:*)",
+      "Bash(gh workflow:*)"
     ]
   }
 }

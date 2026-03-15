@@ -30,7 +30,7 @@ const routes: RouteRecordRaw[] = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory('/weekend-planner/'),
   routes
 })
 
