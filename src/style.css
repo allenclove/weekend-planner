@@ -3,27 +3,65 @@
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
-}
-
-#app {
-  width: 100%;
-  margin: 0;
-  padding: 0;
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F5F5F5;
+  --text-primary: #000000;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --border: #E0E0E0;
 }
 
 * {
   box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+}
+
+/* Minimalist button */
+.btn {
+  @apply px-4 py-2 rounded border border-border bg-bg text-primary cursor-pointer;
+  @apply hover:bg-bg-secondary active:scale-95;
+  @apply transition-all duration-150;
+}
+
+.btn-primary {
+  @apply bg-primary text-bg border-primary;
+  @apply hover:bg-secondary hover:border-secondary;
+}
+
+/* Minimalist input */
+.input {
+  @apply w-full px-3 py-2 border border-border rounded;
+  @apply focus:outline-none focus:border-primary;
+  @apply bg-bg text-primary;
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+  @apply w-5 h-5 border border-border rounded cursor-pointer;
+  @apply appearance-none checked:bg-primary checked:border-primary;
+  @apply relative;
+}
+
+input[type="checkbox"]::after {
+  content: '✓';
+  @apply absolute text-white text-sm;
+  @apply top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2;
+  @apply opacity-0;
+}
+
+input[type="checkbox"]:checked::after {
+  @apply opacity-100;
 }
