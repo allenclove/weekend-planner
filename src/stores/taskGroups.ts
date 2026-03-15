@@ -15,28 +15,40 @@ const DEFAULT_GROUPS: Omit<TaskGroup, 'id'>[] = [
 export const useTaskGroupsStore = defineStore('taskGroups', () => {
   const groups = ref<TaskGroup[]>([])
 
-  // Load from localStorage
+  // Initialize with defaults
+  const initializeDefaults = () => {
+    groups.value = DEFAULT_GROUPS.map((g, i) => ({
+      id: `group-${Date.now()}-${i}`,
+      ...g
+    }))
+  }
+
+  // Load from localStorage with error handling
   const load = () => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      groups.value = JSON.parse(stored)
-    } else {
-      // Initialize with defaults
-      groups.value = DEFAULT_GROUPS.map((g, i) => ({
-        id: `group-${Date.now()}-${i}`,
-        ...g
-      }))
-      save()
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        groups.value = JSON.parse(stored)
+      } else {
+        initializeDefaults()
+      }
+    } catch (error) {
+      console.error('Failed to load task groups from localStorage:', error)
+      initializeDefaults()
     }
   }
 
-  // Save to localStorage
+  // Save to localStorage with error handling
   const save = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(groups.value))
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(groups.value))
+    } catch (error) {
+      console.error('Failed to save task groups to localStorage:', error)
+    }
   }
 
   // Generate unique ID
-  const generateId = () => `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  const generateId = () => `group-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 
   // Add new group
   const addGroup = (name: string) => {
@@ -45,7 +57,6 @@ export const useTaskGroupsStore = defineStore('taskGroups', () => {
       name,
       tasks: []
     })
-    save()
   }
 
   // Add task to group
@@ -53,7 +64,6 @@ export const useTaskGroupsStore = defineStore('taskGroups', () => {
     const group = groups.value.find(g => g.id === groupId)
     if (group) {
       group.tasks.push(taskTitle)
-      save()
     }
   }
 
@@ -62,14 +72,12 @@ export const useTaskGroupsStore = defineStore('taskGroups', () => {
     const group = groups.value.find(g => g.id === groupId)
     if (group && taskIndex >= 0 && taskIndex < group.tasks.length) {
       group.tasks.splice(taskIndex, 1)
-      save()
     }
   }
 
   // Delete group
   const deleteGroup = (groupId: string) => {
     groups.value = groups.value.filter(g => g.id !== groupId)
-    save()
   }
 
   // Update group name
@@ -77,7 +85,6 @@ export const useTaskGroupsStore = defineStore('taskGroups', () => {
     const group = groups.value.find(g => g.id === groupId)
     if (group) {
       group.name = name
-      save()
     }
   }
 

@@ -54,4 +54,11 @@ describe('TaskGroups Store', () => {
     expect(store.groups).toHaveLength(initialLength - 1)
     expect(store.groups.find(g => g.id === group.id)).toBeUndefined()
   })
+
+  it('should update group name', () => {
+    const store = useTaskGroupsStore()
+    const group = store.groups[0]
+    store.updateGroupName(group.id, '健身')
+    expect(store.groups.find(g => g.id === group.id)?.name).toBe('健身')
+  })
 })
