@@ -13,6 +13,7 @@ export const useRewardsStore = defineStore('rewards', () => {
   // State
   const points = ref<number>(0)
   const rewards = ref<Reward[]>([])
+  const previousLevel = ref<number>(1)
 
   // Preset rewards
   const presetRewards: Omit<Reward, 'id' | 'redeemed'>[] = [
@@ -80,9 +81,22 @@ export const useRewardsStore = defineStore('rewards', () => {
     saveToStorage()
   }
 
-  function addPoints(amount: number): void {
+  function addPoints(amount: number): number {
+    const oldLevel = currentLevel.value
     points.value += amount
+    const newLevel = currentLevel.value
+
+    // Track if level increased
+    if (newLevel > oldLevel) {
+      previousLevel.value = oldLevel
+    }
+
     saveToStorage()
+    return newLevel
+  }
+
+  function getLevelIncrease(): number {
+    return currentLevel.value - previousLevel.value
   }
 
   function redeemReward(rewardId: string): boolean {
@@ -132,6 +146,7 @@ export const useRewardsStore = defineStore('rewards', () => {
     // State
     points,
     rewards,
+    previousLevel,
     // Computed
     currentLevel,
     pointsToNextLevel,
@@ -139,6 +154,7 @@ export const useRewardsStore = defineStore('rewards', () => {
     redeemedRewards,
     // Actions
     addPoints,
+    getLevelIncrease,
     redeemReward,
     addCustomReward,
     reset,

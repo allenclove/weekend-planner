@@ -111,33 +111,57 @@
       :points="completedTaskPoints"
       @animation-end="showCompletionAnimation = false"
     />
+
+    <!-- Level Up Animation -->
+    <LevelUpAnimation
+      :show="showLevelUpAnimation"
+      :level="newLevel"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useCurrentPlanStore } from '@/stores/currentPlan'
+import { useRewardsStore } from '@/stores/rewards'
 import { storeToRefs } from 'pinia'
 import TaskItem from '@/components/TaskItem.vue'
 import DaySelector from '@/components/DaySelector.vue'
 import AddTaskModal from '@/components/AddTaskModal.vue'
 import CompletionAnimation from '@/components/CompletionAnimation.vue'
+import LevelUpAnimation from '@/components/LevelUpAnimation.vue'
 import type { TaskCategory, Priority } from '@/types'
 
 const currentPlanStore = useCurrentPlanStore()
 const { currentPlan, selectedDayIndex, selectedDay, totalProgress } = storeToRefs(currentPlanStore)
 const { setSelectedDayIndex, toggleTask, addTask } = currentPlanStore
 
+const rewardsStore = useRewardsStore()
+const { currentLevel } = storeToRefs(rewardsStore)
+
 const showAddTask = ref(false)
 const showCompletionAnimation = ref(false)
+const showLevelUpAnimation = ref(false)
 const completedTaskPoints = ref(0)
+const newLevel = ref(1)
 
 function handleDaySelect(index: number) {
   setSelectedDayIndex(index)
 }
 
 async function handleToggleTask(taskId: string) {
-  await toggleTask(selectedDayIndex.value, taskId)
+  const leveledUp = await toggleTask(selectedDayIndex.value, taskId)
+
+  // Check if leveled up
+  if (leveledUp && leveledUp > currentLevel.value - rewardsStore.getLevelIncrease()) {
+    newLevel.value = leveledUp
+    showLevelUpAnimation.value = true
+
+    // Auto-hide level up animation after 4 seconds
+    setTimeout(() => {
+      showLevelUpAnimation.value = false
+    }, 4000)
+  }
 }
 
 function handleTaskCompleted(taskId: string, points: number) {

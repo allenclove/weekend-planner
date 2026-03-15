@@ -102,10 +102,10 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
     await persistPlan()
   }
 
-  async function toggleTask(dayIndex: number, taskId: string): Promise<void> {
+  async function toggleTask(dayIndex: number, taskId: string): Promise<number | null> {
     if (!currentPlan.value) {
       console.error('[CurrentPlan] No current plan to toggle task in')
-      return
+      return null
     }
 
     const day = currentPlan.value.days[dayIndex]
@@ -113,7 +113,7 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
 
     if (!task) {
       console.error('[CurrentPlan] Task not found:', taskId)
-      return
+      return null
     }
 
     const rewardsStore = useRewardsStore()
@@ -124,15 +124,17 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
       day.completedPoints += task.points
       currentPlan.value.completedPoints += task.points
       // Add points to rewards store when task is completed
-      rewardsStore.addPoints(task.points)
+      const newLevel = rewardsStore.addPoints(task.points)
+      await persistPlan()
+      return newLevel
     } else {
       day.completedPoints -= task.points
       currentPlan.value.completedPoints -= task.points
       // Note: We don't deduct points from rewards when unchecking
       // Points are earned permanently when tasks are completed
+      await persistPlan()
+      return null
     }
-
-    await persistPlan()
   }
 
   async function deleteTask(dayIndex: number, taskId: string): Promise<void> {
