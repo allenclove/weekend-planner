@@ -87,27 +87,38 @@
     </div>
 
     <!-- Floating Action Button -->
-    <router-link
+    <button
       v-if="currentPlan"
-      to="/task"
+      @click="showAddTask = true"
       class="fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full shadow-lg flex items-center justify-center text-white hover:shadow-xl transition-all hover:scale-105 active:scale-95"
     >
       <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
       </svg>
-    </router-link>
+    </button>
+
+    <!-- Add Task Modal -->
+    <AddTaskModal
+      :show="showAddTask"
+      @submit="handleAddTask"
+      @close="showAddTask = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useCurrentPlanStore } from '@/stores/currentPlan'
 import { storeToRefs } from 'pinia'
 import TaskItem from '@/components/TaskItem.vue'
 import DaySelector from '@/components/DaySelector.vue'
+import AddTaskModal from '@/components/AddTaskModal.vue'
 
 const currentPlanStore = useCurrentPlanStore()
 const { currentPlan, selectedDayIndex, selectedDay, totalProgress } = storeToRefs(currentPlanStore)
-const { setSelectedDayIndex, toggleTask } = currentPlanStore
+const { setSelectedDayIndex, toggleTask, addTask } = currentPlanStore
+
+const showAddTask = ref(false)
 
 function handleDaySelect(index: number) {
   setSelectedDayIndex(index)
@@ -115,6 +126,17 @@ function handleDaySelect(index: number) {
 
 async function handleToggleTask(taskId: string) {
   await toggleTask(selectedDayIndex.value, taskId)
+}
+
+async function handleAddTask(taskData: {
+  title: string
+  category: string
+  priority: string
+  points: number
+  note?: string
+}) {
+  await addTask(taskData)
+  showAddTask.value = false
 }
 </script>
 
