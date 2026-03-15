@@ -8,19 +8,19 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/HomeView.vue')
   },
   {
-    path: '/plan',
-    name: 'plan',
-    component: () => import('../views/PlanView.vue')
+    path: '/select-tasks',
+    name: 'select-tasks',
+    component: () => import('../views/TaskSelectionView.vue')
   },
   {
-    path: '/rewards',
-    name: 'rewards',
-    component: () => import('../views/RewardsView.vue')
+    path: '/groups',
+    name: 'groups',
+    component: () => import('../views/GroupsView.vue')
   },
   {
-    path: '/stats',
-    name: 'stats',
-    component: () => import('../views/StatsView.vue')
+    path: '/history',
+    name: 'history',
+    component: () => import('../views/HistoryView.vue')
   },
   {
     path: '/settings',
