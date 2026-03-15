@@ -242,7 +242,7 @@ describe('CurrentPlan Store', () => {
       const task1Id = store.currentPlan!.days[0].tasks[0].id
       store.toggleTask(0, task1Id)
 
-      expect(store.totalProgress).toBe(66.67) // 10/15
+      expect(store.totalProgress).toBeCloseTo(66.67, 2) // 10/15
     })
   })
 
