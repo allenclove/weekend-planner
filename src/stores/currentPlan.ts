@@ -1,200 +1,138 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { WeekendPlan, DayPlan, Task, TaskCategory, Priority } from '@/types'
-import { savePlan, getPlanById } from './database'
-import { useRewardsStore } from './rewards'
+import type { WeekendPlan, DayPlan, Task } from '../types'
+import { initDB } from './database'
+
+const STORAGE_KEY = 'currentplan'
 
 export const useCurrentPlanStore = defineStore('currentPlan', () => {
-  // State
   const currentPlan = ref<WeekendPlan | null>(null)
-  const selectedDayIndex = ref(0)
+  const loading = ref(false)
 
-  // Computed
-  const selectedDay = computed(() => {
-    if (!currentPlan.value || currentPlan.value.days.length === 0) {
-      return null
+  // Load from localStorage
+  const load = async () => {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      currentPlan.value = JSON.parse(stored)
     }
-    return currentPlan.value.days[selectedDayIndex.value]
-  })
+  }
 
-  const totalProgress = computed(() => {
-    if (!currentPlan.value || currentPlan.value.totalPoints === 0) {
-      return 0
+  // Save to localStorage
+  const save = () => {
+    if (currentPlan.value) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentPlan.value))
     }
-    return (currentPlan.value.completedPoints / currentPlan.value.totalPoints) * 100
-  })
+  }
 
-  // Actions
-  function createWeekendPlan(startDate: string, endDate: string): void {
-    const startDateObj = new Date(startDate)
-    const endDateObj = new Date(endDate)
-    const days: DayPlan[] = []
+  // Generate unique ID
+  const generateId = () => `task-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 
-    // Calculate number of days
-    const dayCount = Math.floor((endDateObj.getTime() - startDateObj.getTime()) / (1000 * 60 * 60 * 24)) + 1
-
-    // Create day plans
-    for (let i = 0; i < dayCount; i++) {
-      const date = new Date(startDateObj)
-      date.setDate(date.getDate() + i)
-      days.push({
-        date: date.toISOString().split('T')[0],
-        tasks: [],
-        dailyGoal: 100,
-        completedPoints: 0
-      })
+  // Create new plan for specific date
+  const createPlan = (date: string) => {
+    const dayPlan: DayPlan = {
+      date,
+      tasks: []
     }
-
     currentPlan.value = {
-      id: crypto.randomUUID(),
-      startDate,
-      endDate,
-      days,
-      totalPoints: 0,
-      completedPoints: 0
+      id: `plan-${Date.now()}`,
+      startDate: date,
+      endDate: date,
+      days: [dayPlan]
     }
-
-    // Reset selected day index
-    selectedDayIndex.value = 0
+    save()
   }
 
-  async function loadPlan(planId: string): Promise<void> {
+  // Get current day plan
+  const currentDay = computed(() => {
+    if (!currentPlan.value) return null
+    return currentPlan.value.days[0]
+  })
+
+  // Add task to current day
+  const addTask = (task: Task | Omit<Task, 'id'>) => {
+    if (!currentDay.value) return
+    const newTask: Task = {
+      ...task,
+      id: 'id' in task ? task.id : generateId()
+    }
+    currentDay.value.tasks.push(newTask)
+    save()
+  }
+
+  // Add multiple tasks at once
+  const addTasks = (tasks: Array<Omit<Task, 'id' | 'completed' | 'points' | 'priority'>>) => {
+    if (!currentDay.value) return
+    tasks.forEach(task => {
+      currentDay.value!.tasks.push({
+        ...task,
+        id: generateId(),
+        completed: false,
+        points: 10,
+        priority: 1
+      })
+    })
+    save()
+  }
+
+  // Toggle task completion
+  const toggleTask = (taskId: string) => {
+    if (!currentDay.value) return
+    const task = currentDay.value.tasks.find(t => t.id === taskId)
+    if (task) {
+      task.completed = !task.completed
+      save()
+    }
+  }
+
+  // Update task note
+  const updateTaskNote = (taskId: string, note: string) => {
+    if (!currentDay.value) return
+    const task = currentDay.value.tasks.find(t => t.id === taskId)
+    if (task) {
+      task.note = note
+      save()
+    }
+  }
+
+  // Remove task
+  const removeTask = (taskId: string) => {
+    if (!currentDay.value) return
+    currentDay.value.tasks = currentDay.value.tasks.filter(t => t.id !== taskId)
+    save()
+  }
+
+  // Clear plan
+  const clearPlan = () => {
+    currentPlan.value = null
+    localStorage.removeItem(STORAGE_KEY)
+  }
+
+  // Save to IndexedDB (for history)
+  const saveToHistory = async () => {
+    if (!currentPlan.value) return
+    loading.value = true
     try {
-      const plan = await getPlanById(planId)
-      if (plan) {
-        currentPlan.value = plan
-        selectedDayIndex.value = 0
-      } else {
-        currentPlan.value = null
-      }
-    } catch (error) {
-      console.error('[CurrentPlan] Failed to load plan:', planId, error)
-      currentPlan.value = null
+      const db = await initDB()
+      await db.put('plans', { ...currentPlan.value, savedAt: Date.now() })
+    } finally {
+      loading.value = false
     }
   }
 
-  async function addTask(taskData: {
-    title: string
-    category: TaskCategory
-    priority: Priority
-    note?: string
-    points: number
-  }): Promise<void> {
-    if (!currentPlan.value) {
-      console.error('[CurrentPlan] No current plan to add task to')
-      return
-    }
-
-    const task: Task = {
-      id: crypto.randomUUID(),
-      title: taskData.title,
-      category: taskData.category,
-      priority: taskData.priority,
-      note: taskData.note,
-      points: taskData.points,
-      completed: false
-    }
-
-    const day = currentPlan.value.days[selectedDayIndex.value]
-    day.tasks.push(task)
-    currentPlan.value.totalPoints += task.points
-
-    await persistPlan()
-  }
-
-  async function toggleTask(dayIndex: number, taskId: string): Promise<number | null> {
-    if (!currentPlan.value) {
-      console.error('[CurrentPlan] No current plan to toggle task in')
-      return null
-    }
-
-    const day = currentPlan.value.days[dayIndex]
-    const task = day.tasks.find(t => t.id === taskId)
-
-    if (!task) {
-      console.error('[CurrentPlan] Task not found:', taskId)
-      return null
-    }
-
-    const rewardsStore = useRewardsStore()
-    task.completed = !task.completed
-
-    if (task.completed) {
-      day.completedPoints += task.points
-      currentPlan.value.completedPoints += task.points
-      // Add points to rewards store when task is completed
-      const newLevel = rewardsStore.addPoints(task.points)
-      await persistPlan()
-      return newLevel
-    } else {
-      day.completedPoints -= task.points
-      currentPlan.value.completedPoints -= task.points
-      // Note: We don't deduct points from rewards when unchecking
-      // Points are earned permanently when tasks are completed
-      await persistPlan()
-      return null
-    }
-  }
-
-  async function deleteTask(dayIndex: number, taskId: string): Promise<void> {
-    if (!currentPlan.value) {
-      console.error('[CurrentPlan] No current plan to delete task from')
-      return
-    }
-
-    const day = currentPlan.value.days[dayIndex]
-    const taskIndex = day.tasks.findIndex(t => t.id === taskId)
-
-    if (taskIndex === -1) {
-      console.error('[CurrentPlan] Task not found:', taskId)
-      return
-    }
-
-    const task = day.tasks[taskIndex]
-
-    // Update points
-    currentPlan.value.totalPoints -= task.points
-    if (task.completed) {
-      day.completedPoints -= task.points
-      currentPlan.value.completedPoints -= task.points
-    }
-
-    // Remove task
-    day.tasks.splice(taskIndex, 1)
-
-    await persistPlan()
-  }
-
-  function setSelectedDayIndex(index: number): void {
-    selectedDayIndex.value = index
-  }
-
-  async function persistPlan(): Promise<void> {
-    if (!currentPlan.value) {
-      return
-    }
-
-    try {
-      await savePlan(currentPlan.value)
-    } catch (error) {
-      console.error('[CurrentPlan] Failed to persist plan:', error)
-    }
-  }
+  // Initialize
+  load()
 
   return {
-    // State
     currentPlan,
-    selectedDayIndex,
-    // Computed
-    selectedDay,
-    totalProgress,
-    // Actions
-    createWeekendPlan,
-    loadPlan,
+    currentDay,
+    loading,
+    createPlan,
     addTask,
+    addTasks,
     toggleTask,
-    deleteTask,
-    setSelectedDayIndex,
-    persistPlan
+    updateTaskNote,
+    removeTask,
+    clearPlan,
+    saveToHistory
   }
 })
