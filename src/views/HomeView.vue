@@ -113,6 +113,7 @@ import { storeToRefs } from 'pinia'
 import TaskItem from '@/components/TaskItem.vue'
 import DaySelector from '@/components/DaySelector.vue'
 import AddTaskModal from '@/components/AddTaskModal.vue'
+import type { TaskCategory, Priority } from '@/types'
 
 const currentPlanStore = useCurrentPlanStore()
 const { currentPlan, selectedDayIndex, selectedDay, totalProgress } = storeToRefs(currentPlanStore)
@@ -135,7 +136,11 @@ async function handleAddTask(taskData: {
   points: number
   note?: string
 }) {
-  await addTask(taskData)
+  await addTask({
+    ...taskData,
+    category: taskData.category as TaskCategory,
+    priority: taskData.priority as Priority
+  })
   showAddTask.value = false
 }
 </script>

@@ -186,6 +186,7 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
     addTask,
     toggleTask,
     deleteTask,
-    setSelectedDayIndex
+    setSelectedDayIndex,
+    persistPlan
   }
 })
