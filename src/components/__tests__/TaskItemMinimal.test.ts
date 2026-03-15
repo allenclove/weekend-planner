@@ -66,4 +66,22 @@ describe('TaskItemMinimal', () => {
     })
     expect(wrapper.text()).toContain('公园慢跑')
   })
+
+  it('should emit delete when delete button clicked', async () => {
+    const wrapper = mount(TaskItemMinimal, {
+      props: {
+        task: {
+          id: 'task-1',
+          title: '跑步30分钟',
+          completed: false,
+          points: 10,
+          priority: 1
+        },
+        showDelete: true
+      }
+    })
+    await wrapper.find('button').trigger('click')
+    expect(wrapper.emitted('delete')).toBeTruthy()
+    expect(wrapper.emitted('delete')?.[0]).toEqual(['task-1'])
+  })
 })

@@ -6,6 +6,7 @@
       :checked="task.completed"
       @change="$emit('toggle', task.id)"
       class="mt-0.5"
+      :aria-label="`Mark ${task.title} as ${task.completed ? 'incomplete' : 'complete'}`"
     />
     <div class="flex-1 min-w-0">
       <div
@@ -26,6 +27,7 @@
       v-if="showDelete"
       @click="$emit('delete', task.id)"
       class="text-tertiary hover:text-primary px-2"
+      aria-label="Delete task"
     >
       ×
     </button>
@@ -33,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Task } from '../types'
+import type { Task } from '@/types'
 
 defineProps<{
   task: Task
