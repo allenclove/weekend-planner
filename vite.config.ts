@@ -4,6 +4,7 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [vue()],
+  base: '/weekend-planner/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
@@ -12,6 +13,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts']
+    setupFiles: './src/test/setup.ts'
   }
 })
