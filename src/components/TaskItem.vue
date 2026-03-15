@@ -14,7 +14,7 @@
     <div class="flex items-center gap-3 pl-2">
       <!-- Checkbox -->
       <button
-        @click="$emit('toggle', task.id)"
+        @click="handleToggle"
         class="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors"
         :class="task.completed ? 'bg-purple-500 border-purple-500' : 'border-gray-300'"
       >
@@ -63,9 +63,18 @@ interface Props {
 
 const props = defineProps<Props>()
 
-defineEmits<{
+const emit = defineEmits<{
   toggle: [taskId: string]
+  completed: [taskId: string, points: number]
 }>()
+
+function handleToggle() {
+  emit('toggle', props.task.id)
+  // Emit completed event if task is being marked as completed
+  if (!props.task.completed) {
+    emit('completed', props.task.id, props.task.points)
+  }
+}
 
 // Touch handling for swipe gestures
 const touchStartX = ref(0)

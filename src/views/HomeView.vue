@@ -54,6 +54,7 @@
             :key="task.id"
             :task="task"
             @toggle="handleToggleTask"
+            @completed="handleTaskCompleted"
           />
 
           <!-- Daily Progress -->
@@ -103,6 +104,13 @@
       @submit="handleAddTask"
       @close="showAddTask = false"
     />
+
+    <!-- Completion Animation -->
+    <CompletionAnimation
+      :show="showCompletionAnimation"
+      :points="completedTaskPoints"
+      @animation-end="showCompletionAnimation = false"
+    />
   </div>
 </template>
 
@@ -113,6 +121,7 @@ import { storeToRefs } from 'pinia'
 import TaskItem from '@/components/TaskItem.vue'
 import DaySelector from '@/components/DaySelector.vue'
 import AddTaskModal from '@/components/AddTaskModal.vue'
+import CompletionAnimation from '@/components/CompletionAnimation.vue'
 import type { TaskCategory, Priority } from '@/types'
 
 const currentPlanStore = useCurrentPlanStore()
@@ -120,6 +129,8 @@ const { currentPlan, selectedDayIndex, selectedDay, totalProgress } = storeToRef
 const { setSelectedDayIndex, toggleTask, addTask } = currentPlanStore
 
 const showAddTask = ref(false)
+const showCompletionAnimation = ref(false)
+const completedTaskPoints = ref(0)
 
 function handleDaySelect(index: number) {
   setSelectedDayIndex(index)
@@ -127,6 +138,16 @@ function handleDaySelect(index: number) {
 
 async function handleToggleTask(taskId: string) {
   await toggleTask(selectedDayIndex.value, taskId)
+}
+
+function handleTaskCompleted(taskId: string, points: number) {
+  completedTaskPoints.value = points
+  showCompletionAnimation.value = true
+
+  // Auto-hide animation after 2 seconds
+  setTimeout(() => {
+    showCompletionAnimation.value = false
+  }, 2000)
 }
 
 async function handleAddTask(taskData: {
