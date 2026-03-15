@@ -1,11 +1,15 @@
 // src/stores/__tests__/currentPlan.test.ts
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useCurrentPlanStore } from '../currentPlan'
 
 describe('CurrentPlan Store (Minimalist)', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    localStorage.clear()
+  })
+
+  afterEach(() => {
     localStorage.clear()
   })
 

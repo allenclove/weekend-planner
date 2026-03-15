@@ -9,18 +9,27 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
   const currentPlan = ref<WeekendPlan | null>(null)
   const loading = ref(false)
 
-  // Load from localStorage
-  const load = async () => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      currentPlan.value = JSON.parse(stored)
+  // Load from localStorage with error handling
+  const load = () => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        currentPlan.value = JSON.parse(stored)
+      }
+    } catch (error) {
+      console.error('Failed to load current plan from localStorage:', error)
+      currentPlan.value = null
     }
   }
 
-  // Save to localStorage
+  // Save to localStorage with error handling
   const save = () => {
     if (currentPlan.value) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentPlan.value))
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentPlan.value))
+      } catch (error) {
+        console.error('Failed to save current plan to localStorage:', error)
+      }
     }
   }
 
@@ -113,7 +122,12 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
     loading.value = true
     try {
       const db = await initDB()
-      await db.put('plans', { ...currentPlan.value, savedAt: Date.now() })
+      await db.put('plans', {
+        ...currentPlan.value,
+        savedAt: Date.now()
+      } as WeekendPlan & { savedAt: number })
+    } catch (error) {
+      console.error('Failed to save plan to history:', error)
     } finally {
       loading.value = false
     }
