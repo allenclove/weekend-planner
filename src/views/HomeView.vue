@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCurrentPlanStore } from '@/stores/currentPlan'
 import TaskItemMinimal from '@/components/TaskItemMinimal.vue'
@@ -99,8 +99,4 @@ const handleMenuNavigate = (route: 'groups' | 'history' | 'settings') => {
   else if (route === 'history') router.push('/history')
   else router.push('/settings')
 }
-
-onMounted(() => {
-  planStore.load()
-})
 </script>

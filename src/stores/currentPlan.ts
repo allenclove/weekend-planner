@@ -140,6 +140,7 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
     currentPlan,
     currentDay,
     loading,
+    load,
     createPlan,
     addTask,
     addTasks,
