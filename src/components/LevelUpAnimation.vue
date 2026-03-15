@@ -141,7 +141,7 @@ class FireworkRocket {
     this.particles = []
   }
 
-  update(canvas: HTMLCanvasElement): boolean {
+  update(_canvas: HTMLCanvasElement): boolean {
     if (!this.exploded) {
       this.x += this.vx
       this.y += this.vy

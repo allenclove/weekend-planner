@@ -164,7 +164,7 @@ async function handleToggleTask(taskId: string) {
   }
 }
 
-function handleTaskCompleted(taskId: string, points: number) {
+function handleTaskCompleted(_taskId: string, points: number) {
   completedTaskPoints.value = points
   showCompletionAnimation.value = true
 

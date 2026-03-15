@@ -178,7 +178,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { getAllPlans } from '@/stores/database'
-import type { WeekendPlan, Task } from '@/types'
+import type { WeekendPlan } from '@/types'
 
 // State
 const activeTab = ref<'history' | 'stats'>('history')

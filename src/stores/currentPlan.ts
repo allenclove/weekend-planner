@@ -117,7 +117,6 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
     }
 
     const rewardsStore = useRewardsStore()
-    const wasCompleted = task.completed
     task.completed = !task.completed
 
     if (task.completed) {
