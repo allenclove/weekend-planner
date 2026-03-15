@@ -8,7 +8,7 @@
         class="flex flex-col items-center justify-center flex-1 h-full transition-colors duration-200"
         :class="isActive(item.path) ? 'text-indigo-600' : 'text-gray-500 hover:text-indigo-500'"
       >
-        <component :is="item.icon" class="w-6 h-6" />
+        <span class="text-2xl">{{ item.icon }}</span>
         <span class="text-xs mt-1">{{ item.label }}</span>
       </router-link>
     </div>
@@ -23,34 +23,34 @@ const route = useRoute()
 interface NavItem {
   name: string
   path: string
+  icon: string
   label: string
-  icon: any
 }
 
 const navItems: NavItem[] = [
   {
     name: 'home',
     path: '/',
-    label: '本周',
-    icon: 'HomeIcon'
+    icon: '📅',
+    label: '本周'
   },
   {
     name: 'plan',
     path: '/plan',
-    label: '计划',
-    icon: 'CalendarIcon'
+    icon: '✅',
+    label: '计划'
   },
   {
     name: 'rewards',
     path: '/rewards',
-    label: '奖励',
-    icon: 'GiftIcon'
+    icon: '🎁',
+    label: '奖励'
   },
   {
     name: 'stats',
     path: '/stats',
-    label: '统计',
-    icon: 'ChartIcon'
+    icon: '📊',
+    label: '统计'
   }
 ]
 
