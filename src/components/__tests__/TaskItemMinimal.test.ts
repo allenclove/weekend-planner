@@ -117,8 +117,8 @@ describe('TaskItemMinimal', () => {
       }
     })
     await wrapper.find('.task-item').trigger('click')
-    // Particles should be shown
-    expect(wrapper.find('.particles-container').exists()).toBe(true)
+    // Effect container should be shown
+    expect(wrapper.find('.effect-container').exists()).toBe(true)
   })
 
   it('should not show particles when already completed task is clicked', async () => {

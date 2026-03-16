@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCurrentPlanStore } from '@/stores/currentPlan'
 import TaskItemMinimal from '@/components/TaskItemMinimal.vue'
@@ -58,6 +58,13 @@ const planStore = useCurrentPlanStore()
 
 const showMenu = ref(false)
 const showDateSelector = ref(false)
+
+// 组件挂载时，如果没有今日计划，自动创建
+onMounted(() => {
+  if (!planStore.currentPlan) {
+    planStore.ensureTodayPlan()
+  }
+})
 
 const hasPlan = computed(() => planStore.currentPlan !== null)
 const tasks = computed(() => planStore.currentDay?.tasks ?? [])

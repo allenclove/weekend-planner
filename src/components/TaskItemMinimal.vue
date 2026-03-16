@@ -35,15 +35,23 @@
       ×
     </button>
 
-    <!-- 粒子爆炸效果 -->
-    <transition name="particle-fade">
-      <div v-if="showParticles" class="particles-container pointer-events-none absolute inset-0 overflow-visible">
-        <span
-          v-for="i in 12"
-          :key="i"
-          class="particle"
-          :style="getParticleStyle(i)"
-        ></span>
+    <!-- 优雅的完成特效 -->
+    <transition name="effect-fade">
+      <div v-if="showParticles" class="effect-container pointer-events-none absolute inset-0 overflow-hidden">
+        <!-- 背景渐变闪过 -->
+        <div class="bg-flash"></div>
+
+        <!-- 流光粒子 -->
+        <div v-for="i in 20" :key="'flow-' + i" class="flow-particle" :style="getFlowStyle(i)"></div>
+
+        <!-- 闪光点缀 -->
+        <div v-for="i in 6" :key="'sparkle-' + i" class="sparkle" :style="getSparkleStyle(i)"></div>
+
+        <!-- 成功勾选动画 - 居中显示 -->
+        <svg class="checkmark" viewBox="0 0 52 52">
+          <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+          <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+        </svg>
       </div>
     </transition>
   </div>
@@ -67,75 +75,204 @@ const showParticles = ref(false)
 
 const handleToggle = () => {
   if (!props.task.completed) {
-    // 只在从未完成变为完成时显示粒子
     showParticles.value = true
     setTimeout(() => {
       showParticles.value = false
-    }, 600)
+    }, 1000)
   }
   emit('toggle', props.task.id)
 }
 
-const getParticleStyle = (index: number) => {
-  // 每个粒子的角度：360度均匀分布
-  const angle = (index - 1) * 30
-  // 随机距离 (40-80px)
-  const distance = 40 + Math.random() * 40
-  // 颜色：金色、白色、灰色
-  const colors = ['#fbbf24', '#ffffff', '#9ca3af']
-  const color = colors[Math.floor(Math.random() * colors.length)]
+// 橙色系配色：更深、更鲜艳
+const getFlowStyle = (index: number) => {
+  const angle = (index / 20) * 360
+  const distance = 35 + (index % 4) * 12
+  const delay = index * 20
+
+  // 深橙(#c2410c) 到 橙色(#ea580c) 的渐变
+  const hue = 15 + (index / 20) * 15 // 15-30
 
   return {
     '--angle': `${angle}deg`,
     '--distance': `${distance}px`,
-    '--color': color,
-    'background-color': color
+    '--hue': hue,
+    '--delay': `${delay}ms`
+  }
+}
+
+const getSparkleStyle = (index: number) => {
+  const left = 15 + Math.random() * 70
+  const top = 20 + Math.random() * 60
+  const delay = 100 + Math.random() * 300
+  const size = 3 + Math.random() * 6
+
+  return {
+    '--left': `${left}%`,
+    '--top': `${top}%`,
+    '--delay': `${delay}ms`,
+    '--size': `${size}px`
   }
 }
 </script>
 
 <style scoped>
-.particles-container {
-  z-index: 50;
+.task-item {
+  /* 确保特效不会影响布局 */
+  isolation: isolate;
 }
 
-.particle {
+.effect-container {
+  z-index: 10;
+  border-radius: 0.375rem;
+}
+
+/* 背景渐变闪过 */
+.bg-flash {
   position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(234, 88, 12, 0.2) 50%,
+    transparent 100%
+  );
+  animation: bg-sweep 500ms ease-out forwards;
+  border-radius: 0.375rem;
+}
+
+@keyframes bg-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* 流光粒子 */
+.flow-particle {
+  position: absolute;
   left: 50%;
   top: 50%;
-  margin-left: -3px;
-  margin-top: -3px;
-  opacity: 0;
+  width: 7px;
+  height: 7px;
+  margin-left: -3.5px;
+  margin-top: -3.5px;
+  border-radius: 50%;
+  background: hsl(var(--hue), 95%, 50%);
+  box-shadow: 0 0 10px 2px hsl(var(--hue), 95%, 45%, 0.7);
+  animation: flow-out 500ms ease-out forwards;
+  animation-delay: var(--delay);
 }
 
-.particles-container .particle {
-  animation: explode 600ms ease-out forwards;
-}
-
-@keyframes explode {
+@keyframes flow-out {
   0% {
     transform: translate(0, 0) scale(1);
     opacity: 1;
   }
   100% {
     transform: translate(
-      cos(var(--angle)) * var(--distance)),
-      sin(var(--angle)) * var(--distance))
+      calc(cos(var(--angle)) * var(--distance))),
+      calc(sin(var(--angle)) * var(--distance)))
     scale(0);
     opacity: 0;
   }
 }
 
-.particle-fade-enter-active,
-.particle-fade-leave-active {
+/* 闪光点缀 */
+.sparkle {
+  position: absolute;
+  left: var(--left);
+  top: var(--top);
+  width: var(--size);
+  height: var(--size);
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 8px 2px rgba(234, 88, 12, 0.9);
+  animation: sparkle-flash 350ms ease-out forwards;
+  animation-delay: var(--delay);
+}
+
+@keyframes sparkle-flash {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+/* 成功勾选动画 */
+.checkmark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 50px;
+  height: 50px;
+  margin-left: -25px;
+  margin-top: -25px;
+  animation: checkmark-pop 500ms ease-out forwards;
+}
+
+.checkmark-circle {
+  stroke: #ea580c;
+  stroke-width: 2.5;
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  animation: circle-draw 400ms ease-out forwards;
+  animation-delay: 100ms;
+}
+
+.checkmark-check {
+  stroke: #ea580c;
+  stroke-width: 3;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  stroke-linecap: round;
+  animation: check-draw 250ms ease-out forwards;
+  animation-delay: 350ms;
+}
+
+@keyframes checkmark-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes circle-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.effect-fade-enter-active,
+.effect-fade-leave-active {
   transition: opacity 0.1s;
 }
 
-.particle-fade-enter-from,
-.particle-fade-leave-to {
+.effect-fade-enter-from,
+.effect-fade-leave-to {
   opacity: 0;
 }
 </style>

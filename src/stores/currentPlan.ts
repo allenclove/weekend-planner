@@ -9,12 +9,28 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
   const currentPlan = ref<WeekendPlan | null>(null)
   const loading = ref(false)
 
+  // Get today's date string
+  const getTodayString = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
+
   // Load from localStorage with error handling
   const load = () => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
-        currentPlan.value = JSON.parse(stored)
+        const plan = JSON.parse(stored) as WeekendPlan
+        const today = getTodayString()
+
+        // 如果存储的计划是今天的，直接加载
+        if (plan.startDate === today) {
+          currentPlan.value = plan
+        } else {
+          // 如果是其他日期的计划，清除它
+          localStorage.removeItem(STORAGE_KEY)
+          currentPlan.value = null
+        }
       }
     } catch (error) {
       console.error('Failed to load current plan from localStorage:', error)
@@ -49,6 +65,13 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
       days: [dayPlan]
     }
     save()
+  }
+
+  // Create plan for today if none exists
+  const ensureTodayPlan = () => {
+    if (!currentPlan.value) {
+      createPlan(getTodayString())
+    }
   }
 
   // Get current day plan
@@ -142,6 +165,7 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
     loading,
     load,
     createPlan,
+    ensureTodayPlan,
     addTask,
     addTasks,
     toggleTask,
