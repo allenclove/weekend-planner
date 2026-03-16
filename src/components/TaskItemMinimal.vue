@@ -100,7 +100,7 @@ const getFlowStyle = (index: number) => {
   }
 }
 
-const getSparkleStyle = (index: number) => {
+const getSparkleStyle = (_index: number) => {
   const left = 15 + Math.random() * 70
   const top = 20 + Math.random() * 60
   const delay = 100 + Math.random() * 300

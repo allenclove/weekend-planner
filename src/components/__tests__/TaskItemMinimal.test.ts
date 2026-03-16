@@ -134,7 +134,9 @@ describe('TaskItemMinimal', () => {
       }
     })
     await wrapper.find('.task-item').trigger('click')
-    // Particles should not be shown since task was already completed
-    expect(wrapper.vm.showParticles).toBe(false)
+    // Wait a bit for any potential DOM updates
+    await wrapper.vm.$nextTick()
+    // Effect container should not exist since task was already completed
+    expect(wrapper.find('.effect-container').exists()).toBe(false)
   })
 })

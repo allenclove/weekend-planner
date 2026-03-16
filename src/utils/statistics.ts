@@ -1,5 +1,5 @@
 // src/utils/statistics.ts
-import type { WeekendPlan, Task } from '@/types'
+import type { WeekendPlan } from '@/types'
 
 export interface Statistics {
   totalCompleted: number // 总完成数

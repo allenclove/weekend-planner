@@ -8,6 +8,7 @@ describe('statistics', () => {
     {
       id: 'plan-1',
       startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 昨天
+      endDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
       days: [
         {
           date: '2024-03-15',
@@ -22,6 +23,7 @@ describe('statistics', () => {
     {
       id: 'plan-2',
       startDate: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), // 前天
+      endDate: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
       days: [
         {
           date: '2024-03-14',
