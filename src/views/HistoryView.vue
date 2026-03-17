@@ -45,25 +45,25 @@
 
         <!-- 历史记录 -->
         <section class="py-4">
-          <h2 class="text-primary font-medium mb-3">📅 历史记录</h2>
+          <h2 class="text-primary font-medium mb-3">📅 所有计划</h2>
           <div v-if="history.length === 0" class="text-center py-8 text-tertiary border border-border rounded-lg">
-            暂无历史记录
+            暂无计划记录
           </div>
           <div v-else class="space-y-3">
             <div
-              v-for="plan in history"
+              v-for="plan in sortedHistory"
               :key="plan.id"
               class="history-card border border-border rounded-lg overflow-hidden"
             >
               <!-- 卡片头部 -->
               <div class="flex items-center justify-between px-4 py-3 bg-secondary/5">
-                <h3 class="text-primary font-medium">{{ formatDate(plan.startDate) }}</h3>
+                <h3 class="text-primary font-medium">{{ getPlanTitle(plan) }}</h3>
                 <span class="text-secondary text-sm">
                   {{ getCompletedCount(plan) }}/{{ getTotalCount(plan) }}
                 </span>
               </div>
               <!-- 任务列表 -->
-              <div class="px-4 pb-3">
+              <div v-if="getAllTasks(plan).length > 0" class="px-4 pb-3">
                 <div class="space-y-1">
                   <div
                     v-for="task in getAllTasks(plan).slice(0, 5)"
@@ -79,6 +79,9 @@
                   </div>
                 </div>
               </div>
+              <div v-else class="px-4 pb-3 text-tertiary text-sm">
+                暂无任务
+              </div>
             </div>
           </div>
         </section>
@@ -88,14 +91,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAllPlans } from '@/stores/database'
+import { useCurrentPlanStore } from '@/stores/currentPlan'
 import { getStatistics, type Statistics } from '@/utils/statistics'
 import type { WeekendPlan, Task } from '@/types'
 
 const router = useRouter()
-const history = ref<WeekendPlan[]>([])
+const planStore = useCurrentPlanStore()
 const loading = ref(false)
 const statistics = ref<Statistics>({
   totalCompleted: 0,
@@ -103,6 +106,9 @@ const statistics = ref<Statistics>({
   consecutiveDays: 0,
   mostFrequentTasks: []
 })
+
+// Use current plans from localStorage instead of IndexedDB
+const history = computed(() => planStore.allPlans)
 
 const formatDate = (dateStr: string) => {
   const d = new Date(dateStr)
@@ -125,15 +131,32 @@ const getTotalCount = (plan: WeekendPlan): number => {
   return getAllTasks(plan).length
 }
 
+// Sort history: today/tomorrow first, then by date
+const sortedHistory = computed(() => {
+  return [...history.value].sort((a, b) => {
+    // Today and tomorrow come first
+    if (a.planType === 'today') return -1
+    if (b.planType === 'today') return 1
+    if (a.planType === 'tomorrow') return -1
+    if (b.planType === 'tomorrow') return 1
+    // Then by date (newest first)
+    return new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+  })
+})
+
+const getPlanTitle = (plan: WeekendPlan): string => {
+  if (plan.planType === 'today') return '📆 今日计划'
+  if (plan.planType === 'tomorrow') return '📅 明日计划'
+  if (plan.planType === 'day_after') return '📅 后日计划'
+  if (plan.planType === 'this_week') return '📆 本周计划'
+  if (plan.planType === 'this_month') return '📆 本月计划'
+  return formatDate(plan.startDate)
+}
+
 const loadHistory = async () => {
   loading.value = true
   try {
-    const allPlans = await getAllPlans()
-    history.value = allPlans
-      .filter(p => (p as any).savedAt)
-      .sort((a, b) => ((b as any).savedAt || 0) - ((a as any).savedAt || 0))
-
-    // 计算统计数据
+    // 计算统计数据（使用当前的所有计划）
     statistics.value = await getStatistics(history.value)
   } catch (error) {
     console.error('Failed to load history:', error)

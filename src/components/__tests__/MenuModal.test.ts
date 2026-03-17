@@ -6,7 +6,8 @@ describe('MenuModal', () => {
   it('should render menu items', () => {
     const wrapper = mount(MenuModal, { props: { show: true } })
     expect(wrapper.text()).toContain('任务分组')
-    expect(wrapper.text()).toContain('计划历史')
+    expect(wrapper.text()).toContain('所有计划')
+    expect(wrapper.text()).toContain('成就看板')
     expect(wrapper.text()).toContain('设置')
   })
 

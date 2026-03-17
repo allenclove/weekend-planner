@@ -1,12 +1,23 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { WeekendPlan, DayPlan, Task } from '../types'
+import type { WeekendPlan, Task } from '../types'
+import { PlanType } from '../types'
+import { generateDateRange, getPlanTitle } from '../utils/planDate'
 import { initDB } from './database'
 
-const STORAGE_KEY = 'currentplan'
+const STORAGE_KEY = 'currentPlans'
+
+// 存储结构
+interface StoredPlans {
+  primaryPlanId: string | null
+  plans: Record<string, WeekendPlan>
+}
 
 export const useCurrentPlanStore = defineStore('currentPlan', () => {
-  const currentPlan = ref<WeekendPlan | null>(null)
+  // 多个计划，key 为 planId
+  const plans = ref<Map<string, WeekendPlan>>(new Map())
+  // 当前主要查看的计划ID
+  const primaryPlanId = ref<string | null>(null)
   const loading = ref(false)
 
   // Get today's date string
@@ -20,67 +31,168 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
-        const plan = JSON.parse(stored) as WeekendPlan
-        const today = getTodayString()
+        const data = JSON.parse(stored) as StoredPlans
+        plans.value = new Map(Object.entries(data.plans))
+        primaryPlanId.value = data.primaryPlanId
 
-        // 如果存储的计划是今天的，直接加载
-        if (plan.startDate === today) {
-          currentPlan.value = plan
-        } else {
-          // 如果是其他日期的计划，清除它
-          localStorage.removeItem(STORAGE_KEY)
-          currentPlan.value = null
+        // Ensure today plan exists (but don't change primary plan)
+        const todayPlan = getPlanByType(PlanType.TODAY)
+        if (!todayPlan) {
+          createPlan(PlanType.TODAY)
         }
+        // If no primary plan was set, use today plan
+        if (!primaryPlanId.value) {
+          const tp = getPlanByType(PlanType.TODAY)
+          if (tp) primaryPlanId.value = tp.id
+        }
+      } else {
+        // 首次使用，创建今日计划
+        ensureTodayPlan()
       }
     } catch (error) {
-      console.error('Failed to load current plan from localStorage:', error)
-      currentPlan.value = null
+      console.error('Failed to load current plans from localStorage:', error)
+      ensureTodayPlan()
     }
   }
 
   // Save to localStorage with error handling
   const save = () => {
-    if (currentPlan.value) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentPlan.value))
-      } catch (error) {
-        console.error('Failed to save current plan to localStorage:', error)
+    try {
+      const data: StoredPlans = {
+        primaryPlanId: primaryPlanId.value,
+        plans: Object.fromEntries(plans.value)
       }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    } catch (error) {
+      console.error('Failed to save current plans to localStorage:', error)
     }
   }
 
   // Generate unique ID
   const generateId = () => `task-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 
-  // Create new plan for specific date
-  const createPlan = (date: string) => {
-    const dayPlan: DayPlan = {
-      date,
-      tasks: []
+  // Create new plan by type
+  const createPlan = (type: PlanType, customDate?: string): WeekendPlan => {
+    const dateRange = generateDateRange(type, customDate)
+    const plan: WeekendPlan = {
+      id: `plan-${type}-${Date.now()}`,
+      startDate: dateRange.start,
+      endDate: dateRange.end,
+      days: dateRange.days,
+      planType: type
     }
-    currentPlan.value = {
-      id: `plan-${Date.now()}`,
-      startDate: date,
-      endDate: date,
-      days: [dayPlan]
+    plans.value.set(plan.id, plan)
+
+    // 设置为主计划（如果是今日或没有主计划）
+    if (type === PlanType.TODAY || !primaryPlanId.value) {
+      primaryPlanId.value = plan.id
+    }
+
+    save()
+    return plan
+  }
+
+  // Get plan by type
+  const getPlanByType = (type: PlanType): WeekendPlan | null => {
+    for (const plan of plans.value.values()) {
+      if (plan.planType === type) {
+        return plan
+      }
+    }
+    return null
+  }
+
+  // Ensure today plan exists (without changing primary plan)
+  const ensureTodayPlan = () => {
+    const todayPlan = getPlanByType(PlanType.TODAY)
+    if (!todayPlan) {
+      createPlan(PlanType.TODAY)
+    }
+    // Don't override primaryPlanId - keep user's selection
+    if (!primaryPlanId.value) {
+      const tp = getPlanByType(PlanType.TODAY)
+      if (tp) primaryPlanId.value = tp.id
+    }
+  }
+
+  // Get primary plan
+  const primaryPlan = computed(() => {
+    if (!primaryPlanId.value) return null
+    return plans.value.get(primaryPlanId.value) || null
+  })
+
+  // Get current day plan (from primary plan)
+  const currentDay = computed(() => {
+    if (!primaryPlan.value) return null
+    const today = getTodayString()
+    return primaryPlan.value.days.find(d => d.date === today) || primaryPlan.value.days[0] || null
+  })
+
+  // Get a specific plan by ID
+  const getPlan = (planId: string): WeekendPlan | null => {
+    return plans.value.get(planId) || null
+  }
+
+  // Set primary plan
+  const setPrimaryPlan = (planId: string) => {
+    if (plans.value.has(planId)) {
+      primaryPlanId.value = planId
+      save()
+    }
+  }
+
+  // Delete a plan
+  const deletePlan = (planId: string) => {
+    plans.value.delete(planId)
+    if (primaryPlanId.value === planId) {
+      // 如果删除的是主计划，设置今日计划为主计划
+      ensureTodayPlan()
     }
     save()
   }
 
-  // Create plan for today if none exists
-  const ensureTodayPlan = () => {
-    if (!currentPlan.value) {
-      createPlan(getTodayString())
+  // Get all plans
+  const allPlans = computed(() => {
+    return Array.from(plans.value.values()).sort((a, b) => {
+      // 按类型和日期排序
+      const typeOrder = { [PlanType.TODAY]: 0, [PlanType.TOMORROW]: 1, [PlanType.DAY_AFTER]: 2, [PlanType.THIS_WEEK]: 3, [PlanType.THIS_MONTH]: 4, [PlanType.CUSTOM]: 5 }
+      const aOrder = typeOrder[a.planType || PlanType.CUSTOM] ?? 99
+      const bOrder = typeOrder[b.planType || PlanType.CUSTOM] ?? 99
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder
+      }
+      return new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    })
+  })
+
+  // Get plan display info
+  const getPlanDisplayInfo = (plan: WeekendPlan) => {
+    const type = plan.planType || PlanType.CUSTOM
+    return {
+      title: getPlanTitle(type, plan.startDate, plan.endDate),
+      remainingDays: getRemainingDaysText(type, plan.startDate, plan.endDate),
+      completedCount: plan.days.reduce((sum, day) => sum + day.tasks.filter(t => t.completed).length, 0),
+      totalCount: plan.days.reduce((sum, day) => sum + day.tasks.length, 0)
     }
   }
 
-  // Get current day plan
-  const currentDay = computed(() => {
-    if (!currentPlan.value) return null
-    return currentPlan.value.days[0]
-  })
+  // Helper to get remaining days text
+  const getRemainingDaysText = (type: PlanType, start: string, end: string): string => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const startDate = new Date(start)
+    startDate.setHours(0, 0, 0, 0)
+    const endDate = new Date(end)
+    endDate.setHours(0, 0, 0, 0)
 
-  // Add task to current day
+    if (type === PlanType.THIS_WEEK || type === PlanType.THIS_MONTH) {
+      const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      return `共${totalDays}天`
+    }
+    return ''
+  }
+
+  // Add task to current day (of primary plan)
   const addTask = (task: Task | Omit<Task, 'id'>) => {
     if (!currentDay.value) return
     const newTask: Task = {
@@ -133,20 +245,21 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
     save()
   }
 
-  // Clear plan
-  const clearPlan = () => {
-    currentPlan.value = null
+  // Clear all plans
+  const clearPlans = () => {
+    plans.value.clear()
+    primaryPlanId.value = null
     localStorage.removeItem(STORAGE_KEY)
   }
 
-  // Save to IndexedDB (for history)
+  // Save primary plan to IndexedDB (for history)
   const saveToHistory = async () => {
-    if (!currentPlan.value) return
+    if (!primaryPlan.value) return
     loading.value = true
     try {
       const db = await initDB()
       await db.put('plans', {
-        ...currentPlan.value,
+        ...primaryPlan.value,
         savedAt: Date.now()
       } as WeekendPlan & { savedAt: number })
     } catch (error) {
@@ -160,18 +273,33 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
   load()
 
   return {
-    currentPlan,
+    // State
+    plans,
+    primaryPlan,
+    primaryPlanId,
     currentDay,
     loading,
+    allPlans,
+
+    // Plan management
     load,
     createPlan,
+    getPlan,
+    getPlanByType,
+    setPrimaryPlan,
+    deletePlan,
     ensureTodayPlan,
+    getPlanDisplayInfo,
+
+    // Task management (on primary plan)
     addTask,
     addTasks,
     toggleTask,
     updateTaskNote,
     removeTask,
-    clearPlan,
+
+    // Utilities
+    clearPlans,
     saveToHistory
   }
 })

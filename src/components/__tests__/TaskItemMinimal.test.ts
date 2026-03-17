@@ -1,9 +1,14 @@
 // src/components/__tests__/TaskItemMinimal.test.ts
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import TaskItemMinimal from '../TaskItemMinimal.vue'
 
 describe('TaskItemMinimal', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
   it('should render task title', () => {
     const wrapper = mount(TaskItemMinimal, {
       props: {

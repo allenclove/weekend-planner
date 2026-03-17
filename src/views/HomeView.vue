@@ -2,24 +2,24 @@
 <template>
   <div class="home-view min-h-screen bg-bg">
     <header class="flex items-center justify-between px-4 py-3 border-b border-border sticky top-0 bg-bg z-10">
-      <h1 class="text-xl text-primary font-medium">{{ formattedDate }}</h1>
+      <h1 class="text-xl text-primary font-medium">{{ todayDate }}</h1>
       <button @click="showMenu = true" class="text-2xl text-primary p-2">⋯</button>
     </header>
 
     <main class="px-4 pb-20">
-      <div v-if="hasPlan" class="task-list">
-        <TaskItemMinimal
-          v-for="task in tasks"
-          :key="task.id"
-          :task="task"
-          @toggle="toggleTask"
-          @delete="removeTask"
+      <!-- 计划卡片列表 -->
+      <div class="space-y-3">
+        <PlanCard
+          v-for="plan in planStore.allPlans"
+          :key="plan.id"
+          :plan="plan"
+          :is-primary="plan.id === planStore.primaryPlanId"
+          @set-primary="handleSetPrimary"
         />
-        <div v-if="tasks.length === 0" class="text-center py-12 text-tertiary">
-          今日暂无任务<br>点击右下角 + 添加
-        </div>
       </div>
-      <div v-else class="text-center py-12 text-tertiary">
+
+      <!-- 空状态 -->
+      <div v-if="planStore.allPlans.length === 0" class="text-center py-12 text-tertiary">
         点击右下角 + 开始规划
       </div>
     </main>
@@ -37,10 +37,10 @@
       @navigate="handleMenuNavigate"
     />
 
-    <DateSelectorModal
-      :show="showDateSelector"
-      @close="showDateSelector = false"
-      @select="handleDateSelect"
+    <PlanTypeSelector
+      :show="showPlanSelector"
+      @close="showPlanSelector = false"
+      @select="handlePlanSelect"
     />
   </div>
 </template>
@@ -49,29 +49,24 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCurrentPlanStore } from '@/stores/currentPlan'
-import TaskItemMinimal from '@/components/TaskItemMinimal.vue'
+import PlanCard from '@/components/PlanCard.vue'
 import MenuModal from '@/components/MenuModal.vue'
-import DateSelectorModal from '@/components/DateSelectorModal.vue'
+import PlanTypeSelector from '@/components/PlanTypeSelector.vue'
 
 const router = useRouter()
 const planStore = useCurrentPlanStore()
 
 const showMenu = ref(false)
-const showDateSelector = ref(false)
+const showPlanSelector = ref(false)
 
-// 组件挂载时，如果没有今日计划，自动创建
+// 组件挂载时，确保有今日计划
 onMounted(() => {
-  if (!planStore.currentPlan) {
-    planStore.ensureTodayPlan()
-  }
+  planStore.ensureTodayPlan()
 })
 
-const hasPlan = computed(() => planStore.currentPlan !== null)
-const tasks = computed(() => planStore.currentDay?.tasks ?? [])
-
-const formattedDate = computed(() => {
-  if (!planStore.currentPlan) return '周末规划器'
-  const d = new Date(planStore.currentPlan.startDate)
+// 今日日期显示
+const todayDate = computed(() => {
+  const d = new Date()
   const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
   const weekday = weekdays[d.getDay()]
   const month = d.getMonth() + 1
@@ -79,30 +74,25 @@ const formattedDate = computed(() => {
   return `${weekday} ${month}月${date}日`
 })
 
-const toggleTask = (id: string) => {
-  planStore.toggleTask(id)
-}
-
-const removeTask = (id: string) => {
-  planStore.removeTask(id)
+const handleSetPrimary = (planId: string) => {
+  planStore.setPrimaryPlan(planId)
 }
 
 const handleAddClick = () => {
-  if (hasPlan.value) {
-    router.push('/select-tasks')
-  } else {
-    showDateSelector.value = true
-  }
+  // 点击加号总是打开计划类型选择器
+  showPlanSelector.value = true
 }
 
-const handleDateSelect = (date: string) => {
-  planStore.createPlan(date)
+const handlePlanSelect = (planId: string) => {
+  // 设置为主计划，然后跳转到任务选择
+  planStore.setPrimaryPlan(planId)
   router.push('/select-tasks')
 }
 
-const handleMenuNavigate = (route: 'groups' | 'history' | 'settings') => {
+const handleMenuNavigate = (route: 'groups' | 'all-plans' | 'history' | 'settings') => {
   showMenu.value = false
   if (route === 'groups') router.push('/groups')
+  else if (route === 'all-plans') router.push('/all-plans')
   else if (route === 'history') router.push('/history')
   else router.push('/settings')
 }

@@ -18,6 +18,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/GroupsView.vue')
   },
   {
+    path: '/all-plans',
+    name: 'all-plans',
+    component: () => import('../views/AllPlansView.vue')
+  },
+  {
     path: '/history',
     name: 'history',
     component: () => import('../views/HistoryView.vue')

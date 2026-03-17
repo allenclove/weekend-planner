@@ -14,8 +14,7 @@ export interface Statistics {
 export async function getStatistics(plans: WeekendPlan[]): Promise<Statistics> {
   // 按日期排序（最新的在前）
   const sortedPlans = plans
-    .filter(p => (p as any).savedAt)
-    .sort((a, b) => ((b as any).savedAt || 0) - ((a as any).savedAt || 0))
+    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
 
   // 计算总完成数
   const totalCompleted = sortedPlans.reduce((sum, plan) => {
