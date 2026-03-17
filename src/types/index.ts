@@ -41,6 +41,21 @@ export enum PlanType {
   CUSTOM = 'custom'
 }
 
+// Combo state for tracking consecutive task completions
+export interface ComboState {
+  count: number
+  maxCount: number
+  lastResetAt: number
+}
+
+// Completion effect data for gamification
+export interface CompletionEffect {
+  show: boolean
+  points: number
+  stars: number
+  combo: number
+}
+
 // Data export structure with task groups
 export interface ExportData {
   version: string
