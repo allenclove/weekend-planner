@@ -52,7 +52,7 @@ const exportData = () => {
     exportDate: new Date().toISOString(),
     currentPlan: planStore.primaryPlan ?? undefined,
     taskGroups: groupsStore.groups,
-    history: []
+    history: planStore.allPlans
   }
 
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -73,14 +73,14 @@ const importData = (event: Event) => {
     try {
       const data = JSON.parse(e.target?.result as string) as ExportData
 
+      // Import task groups
       if (data.taskGroups) {
         localStorage.setItem('taskgroups', JSON.stringify(data.taskGroups))
-        // Reload to update store
-        location.reload()
       }
 
+      // Import plans - handle both old and new formats
       if (data.currentPlan) {
-        // 迁移到新的存储格式
+        // Old format: single plan
         const plansData = {
           primaryPlanId: data.currentPlan.id,
           plans: {
@@ -88,10 +88,36 @@ const importData = (event: Event) => {
           }
         }
         localStorage.setItem('currentPlans', JSON.stringify(plansData))
+      } else if (data.history && data.history.length > 0) {
+        // New format: multiple plans in history
+        const plansMap: Record<string, any> = {}
+        let primaryId: string | null = null
+
+        // Find today's plan as primary
+        const today = new Date().toISOString().split('T')[0]
+        for (const plan of data.history) {
+          plansMap[plan.id] = plan
+          if (plan.planType === 'today' || plan.startDate === today) {
+            primaryId = plan.id
+          }
+        }
+
+        // If no today plan, use first plan as primary
+        if (!primaryId && data.history.length > 0) {
+          primaryId = data.history[0].id
+        }
+
+        const plansData = {
+          primaryPlanId: primaryId,
+          plans: plansMap
+        }
+        localStorage.setItem('currentPlans', JSON.stringify(plansData))
       }
 
-      alert('导入成功！')
+      alert('导入成功！页面将重新加载...')
+      setTimeout(() => location.reload(), 500)
     } catch (error) {
+      console.error('Import error:', error)
       alert('导入失败：文件格式错误')
     }
   }

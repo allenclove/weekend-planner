@@ -35,19 +35,15 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
         plans.value = new Map(Object.entries(data.plans))
         primaryPlanId.value = data.primaryPlanId
 
-        // 如果没有主计划或主计划不是今天的，创建今日计划
-        const today = getTodayString()
+        // Ensure today plan exists (but don't change primary plan)
+        const todayPlan = getPlanByType(PlanType.TODAY)
+        if (!todayPlan) {
+          createPlan(PlanType.TODAY)
+        }
+        // If no primary plan was set, use today plan
         if (!primaryPlanId.value) {
-          ensureTodayPlan()
-        } else {
-          const primaryPlan = plans.value.get(primaryPlanId.value)
-          // 如果主计划不是今天的，确保有今日计划
-          if (primaryPlan && primaryPlan.startDate !== today) {
-            const todayPlan = getPlanByType(PlanType.TODAY)
-            if (!todayPlan) {
-              ensureTodayPlan()
-            }
-          }
+          const tp = getPlanByType(PlanType.TODAY)
+          if (tp) primaryPlanId.value = tp.id
         }
       } else {
         // 首次使用，创建今日计划
@@ -106,14 +102,16 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
     return null
   }
 
-  // Ensure today plan exists
+  // Ensure today plan exists (without changing primary plan)
   const ensureTodayPlan = () => {
     const todayPlan = getPlanByType(PlanType.TODAY)
     if (!todayPlan) {
-      const plan = createPlan(PlanType.TODAY)
-      primaryPlanId.value = plan.id
-    } else {
-      primaryPlanId.value = todayPlan.id
+      createPlan(PlanType.TODAY)
+    }
+    // Don't override primaryPlanId - keep user's selection
+    if (!primaryPlanId.value) {
+      const tp = getPlanByType(PlanType.TODAY)
+      if (tp) primaryPlanId.value = tp.id
     }
   }
 
