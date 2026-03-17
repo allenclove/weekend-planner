@@ -15,7 +15,6 @@
           :plan="plan"
           :is-primary="plan.id === planStore.primaryPlanId"
           @set-primary="handleSetPrimary"
-          @add-task="handleAddTaskToPlan"
         />
       </div>
 
@@ -79,23 +78,13 @@ const handleSetPrimary = (planId: string) => {
   planStore.setPrimaryPlan(planId)
 }
 
-const handleAddTaskToPlan = (planId: string) => {
-  // 设置为主计划，然后跳转到任务选择
-  planStore.setPrimaryPlan(planId)
-  router.push('/select-tasks')
-}
-
 const handleAddClick = () => {
-  // 如果没有主计划，直接打开选择器
-  // 如果有主计划，跳转到任务选择
-  if (!planStore.primaryPlanId) {
-    showPlanSelector.value = true
-  } else {
-    router.push('/select-tasks')
-  }
+  // 点击加号总是打开计划类型选择器
+  showPlanSelector.value = true
 }
 
 const handlePlanSelect = (planId: string) => {
+  // 设置为主计划，然后跳转到任务选择
   planStore.setPrimaryPlan(planId)
   router.push('/select-tasks')
 }
