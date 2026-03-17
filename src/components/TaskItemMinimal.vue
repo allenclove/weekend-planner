@@ -12,18 +12,37 @@
       :aria-label="`Mark ${task.title} as ${task.completed ? 'incomplete' : 'complete'}`"
     />
     <div class="flex-1 min-w-0">
-      <div
-        class="task-name text-primary"
-        :class="{ 'line-through text-tertiary': task.completed }"
-      >
-        {{ task.title }}
+      <div class="flex items-center gap-2">
+        <div
+          class="task-name text-primary"
+          :class="{ 'line-through text-tertiary': task.completed }"
+        >
+          {{ task.title }}
+        </div>
+
+        <!-- 游戏化特效组件 -->
+        <StarRating
+          v-if="effectData.showStars && effectData.show"
+          :points="effectData.points"
+          :priority="task.priority"
+          :show="effectData.showStars && effectData.show"
+        />
       </div>
+
       <div
         v-if="task.note"
         class="task-note text-secondary text-sm mt-1"
         :class="{ 'line-through': task.completed }"
       >
         {{ task.note }}
+      </div>
+
+      <!-- 经验条 -->
+      <div v-if="effectData.showExpBar && effectData.show" class="mt-2">
+        <ExperienceBar
+          :progress="effectData.points * 2"
+          :show="effectData.showExpBar && effectData.show"
+        />
       </div>
     </div>
     <button
@@ -54,12 +73,28 @@
         </svg>
       </div>
     </transition>
+
+    <!-- 连击提示 -->
+    <FloatingText
+      v-if="effectData.combo >= 3 && effectData.show"
+      :text="getComboText()"
+      :show="effectData.show && effectData.combo >= 3"
+      :x="75"
+      :y="30"
+      color="#f59e0b"
+      :duration="1500"
+      @hide="effectData.show = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { Task } from '@/types'
+import { useComboStore } from '@/stores/combo'
+import ExperienceBar from './ExperienceBar.vue'
+import StarRating from './StarRating.vue'
+import FloatingText from './FloatingText.vue'
 
 const props = defineProps<{
   task: Task
@@ -72,15 +107,59 @@ const emit = defineEmits<{
 }>()
 
 const showParticles = ref(false)
+const comboStore = useComboStore()
+
+// 特效状态
+const effectData = ref({
+  points: 0,
+  stars: 0,
+  combo: 0,
+  showExpBar: false,
+  showStars: false,
+  show: false
+})
 
 const handleToggle = () => {
   if (!props.task.completed) {
+    // 计算最终积分
+    const finalScore = props.task.points * (1 + (props.task.priority - 1) * 0.5)
+
+    // 更新连击
+    comboStore.addCombo()
+
+    // 触发特效
+    triggerEffect(finalScore)
+
+    // 现有粒子特效
     showParticles.value = true
     setTimeout(() => {
       showParticles.value = false
     }, 1000)
   }
   emit('toggle', props.task.id)
+}
+
+const triggerEffect = (score: number) => {
+  effectData.value = {
+    points: score,
+    stars: score <= 10 ? 1 : score <= 20 ? 2 : 3,
+    combo: comboStore.count,
+    showExpBar: true,
+    showStars: true,
+    show: true
+  }
+
+  // 1.5秒后隐藏特效
+  setTimeout(() => {
+    effectData.value.show = false
+  }, 1500)
+}
+
+const getComboText = () => {
+  if (effectData.value.combo >= 5) {
+    return '太棒了！连击 x5!'
+  }
+  return `连击 x${effectData.value.combo}!`
 }
 
 // 橙色系配色：更深、更鲜艳
