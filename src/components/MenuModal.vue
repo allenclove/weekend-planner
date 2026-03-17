@@ -10,9 +10,13 @@
           <span class="text-xl">📋</span>
           <span class="text-primary">任务分组</span>
         </div>
+        <div class="menu-item flex items-center gap-3 p-3 hover:bg-bg-secondary rounded-lg cursor-pointer" @click="$emit('navigate', 'all-plans')">
+          <span class="text-xl">📊</span>
+          <span class="text-primary">所有计划</span>
+        </div>
         <div class="menu-item flex items-center gap-3 p-3 hover:bg-bg-secondary rounded-lg cursor-pointer" @click="$emit('navigate', 'history')">
           <span class="text-xl">📅</span>
-          <span class="text-primary">计划历史</span>
+          <span class="text-primary">成就看板</span>
         </div>
         <div class="menu-item flex items-center gap-3 p-3 hover:bg-bg-secondary rounded-lg cursor-pointer" @click="$emit('navigate', 'settings')">
           <span class="text-xl">⚙️</span>
@@ -30,7 +34,7 @@ defineProps<{
 
 defineEmits<{
   close: []
-  navigate: [route: 'groups' | 'history' | 'settings']
+  navigate: [route: 'groups' | 'all-plans' | 'history' | 'settings']
 }>()
 </script>
 

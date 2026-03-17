@@ -50,7 +50,7 @@ const exportData = () => {
   const data: ExportData = {
     version: '1.0',
     exportDate: new Date().toISOString(),
-    currentPlan: planStore.currentPlan ?? undefined,
+    currentPlan: planStore.primaryPlan ?? undefined,
     taskGroups: groupsStore.groups,
     history: []
   }
@@ -80,7 +80,14 @@ const importData = (event: Event) => {
       }
 
       if (data.currentPlan) {
-        localStorage.setItem('currentplan', JSON.stringify(data.currentPlan))
+        // 迁移到新的存储格式
+        const plansData = {
+          primaryPlanId: data.currentPlan.id,
+          plans: {
+            [data.currentPlan.id]: data.currentPlan
+          }
+        }
+        localStorage.setItem('currentPlans', JSON.stringify(plansData))
       }
 
       alert('导入成功！')

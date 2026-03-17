@@ -28,6 +28,17 @@ export interface WeekendPlan {
   startDate: string
   endDate: string
   days: DayPlan[]
+  planType?: PlanType
+}
+
+// Plan type enumeration
+export enum PlanType {
+  TODAY = 'today',
+  TOMORROW = 'tomorrow',
+  DAY_AFTER = 'day_after',
+  THIS_WEEK = 'this_week',
+  THIS_MONTH = 'this_month',
+  CUSTOM = 'custom'
 }
 
 // Data export structure with task groups
