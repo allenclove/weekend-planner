@@ -15,9 +15,7 @@ describe('TaskItemMinimal', () => {
         task: {
           id: 'task-1',
           title: '跑步30分钟',
-          completed: false,
-          points: 10,
-          priority: 1
+          completed: false
         }
       }
     })
@@ -30,9 +28,7 @@ describe('TaskItemMinimal', () => {
         task: {
           id: 'task-1',
           title: '跑步30分钟',
-          completed: true,
-          points: 10,
-          priority: 1
+          completed: true
         }
       }
     })
@@ -46,9 +42,7 @@ describe('TaskItemMinimal', () => {
         task: {
           id: 'task-1',
           title: '跑步30分钟',
-          completed: false,
-          points: 10,
-          priority: 1
+          completed: false
         }
       }
     })
@@ -63,9 +57,7 @@ describe('TaskItemMinimal', () => {
         task: {
           id: 'task-1',
           title: '跑步30分钟',
-          completed: false,
-          points: 10,
-          priority: 1
+          completed: false
         },
         showDelete: true
       }
@@ -81,9 +73,7 @@ describe('TaskItemMinimal', () => {
         task: {
           id: 'task-1',
           title: '跑步30分钟',
-          completed: false,
-          points: 10,
-          priority: 1
+          completed: false
         },
         showDelete: true
       }
@@ -100,48 +90,41 @@ describe('TaskItemMinimal', () => {
           id: 'task-1',
           title: '跑步30分钟',
           note: '公园慢跑',
-          completed: false,
-          points: 10,
-          priority: 1
+          completed: false
         }
       }
     })
     expect(wrapper.text()).toContain('公园慢跑')
   })
 
-  it('should show particles when incomplete task is clicked', async () => {
+  it('should have checkbox with correct attributes', () => {
     const wrapper = mount(TaskItemMinimal, {
       props: {
         task: {
           id: 'task-1',
           title: '跑步30分钟',
-          completed: false,
-          points: 10,
-          priority: 1
+          completed: false
         }
       }
     })
-    await wrapper.find('.task-item').trigger('click')
-    // Effect container should be shown
-    expect(wrapper.find('.effect-container').exists()).toBe(true)
+    const checkbox = wrapper.find('input[type="checkbox"]')
+    expect(checkbox.exists()).toBe(true)
+    expect(checkbox.attributes('aria-label')).toBe('Mark 跑步30分钟 as complete')
   })
 
-  it('should not show particles when already completed task is clicked', async () => {
+  it('should have minimal DOM structure', () => {
     const wrapper = mount(TaskItemMinimal, {
       props: {
         task: {
           id: 'task-1',
           title: '跑步30分钟',
-          completed: true,
-          points: 10,
-          priority: 1
+          completed: false
         }
       }
     })
-    await wrapper.find('.task-item').trigger('click')
-    // Wait a bit for any potential DOM updates
-    await wrapper.vm.$nextTick()
-    // Effect container should not exist since task was already completed
+    // Should not have any effect containers or gamification elements
     expect(wrapper.find('.effect-container').exists()).toBe(false)
+    expect(wrapper.find('.flow-particle').exists()).toBe(false)
+    expect(wrapper.find('.sparkle').exists()).toBe(false)
   })
 })

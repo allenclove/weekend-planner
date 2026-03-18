@@ -105,14 +105,41 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
   // Ensure today plan exists (without changing primary plan)
   const ensureTodayPlan = () => {
     const todayPlan = getPlanByType(PlanType.TODAY)
+    const todayString = getTodayString()
+
     if (!todayPlan) {
+      // First time using the app
       createPlan(PlanType.TODAY)
+      return
     }
+
+    // Check if today plan date is actually today
+    if (todayPlan.startDate !== todayString) {
+      // Date has passed, archive old plan and create new one
+      archiveAndRenewTodayPlan(todayPlan)
+    }
+
     // Don't override primaryPlanId - keep user's selection
     if (!primaryPlanId.value) {
       const tp = getPlanByType(PlanType.TODAY)
       if (tp) primaryPlanId.value = tp.id
     }
+  }
+
+  // Archive old today plan and create new one
+  const archiveAndRenewTodayPlan = (oldPlan: WeekendPlan) => {
+    // Mark old plan as custom (archived)
+    oldPlan.planType = PlanType.CUSTOM
+
+    // Create new today plan
+    const newPlan = createPlan(PlanType.TODAY)
+
+    // If old plan was primary, switch to new plan
+    if (primaryPlanId.value === oldPlan.id) {
+      primaryPlanId.value = newPlan.id
+    }
+
+    save()
   }
 
   // Get primary plan
@@ -204,15 +231,13 @@ export const useCurrentPlanStore = defineStore('currentPlan', () => {
   }
 
   // Add multiple tasks at once
-  const addTasks = (tasks: Array<Omit<Task, 'id' | 'completed' | 'points' | 'priority'>>) => {
+  const addTasks = (tasks: Array<Omit<Task, 'id' | 'completed'>>) => {
     if (!currentDay.value) return
     tasks.forEach(task => {
       currentDay.value!.tasks.push({
         ...task,
         id: generateId(),
-        completed: false,
-        points: 10,
-        priority: 1
+        completed: false
       })
     })
     save()

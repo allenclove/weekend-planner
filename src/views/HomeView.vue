@@ -6,6 +6,9 @@
       <button @click="showMenu = true" class="text-2xl text-primary p-2">⋯</button>
     </header>
 
+    <!-- Progress summary -->
+    <ProgressSummary />
+
     <main class="px-4 pb-20">
       <!-- 计划卡片列表 -->
       <div class="space-y-3">
@@ -50,6 +53,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCurrentPlanStore } from '@/stores/currentPlan'
 import PlanCard from '@/components/PlanCard.vue'
+import ProgressSummary from '@/components/ProgressSummary.vue'
 import MenuModal from '@/components/MenuModal.vue'
 import PlanTypeSelector from '@/components/PlanTypeSelector.vue'
 

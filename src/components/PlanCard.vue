@@ -27,9 +27,9 @@
     <div v-if="!isMultiDay" class="plan-content px-4 pb-3">
       <!-- 进度条 -->
       <div class="pb-3">
-        <div class="h-1.5 bg-secondary rounded-full overflow-hidden">
+        <div class="h-px bg-secondary rounded overflow-hidden">
           <div
-            class="h-full bg-primary transition-all duration-300"
+            class="h-full bg-primary transition-all duration-normal ease-out"
             :style="{ width: `${progressPercentage}%` }"
           ></div>
         </div>
@@ -57,9 +57,9 @@
         <div v-show="expanded" class="plan-content px-4 pb-3">
           <!-- 进度条 -->
           <div class="pb-3">
-            <div class="h-1.5 bg-secondary rounded-full overflow-hidden">
+            <div class="h-px bg-secondary rounded overflow-hidden">
               <div
-                class="h-full bg-primary transition-all duration-300"
+                class="h-full bg-primary transition-all duration-normal ease-out"
                 :style="{ width: `${progressPercentage}%` }"
               ></div>
             </div>

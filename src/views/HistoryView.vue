@@ -1,78 +1,77 @@
+<!-- HistoryView.vue - Enhanced statistics and history -->
 <template>
-  <div class="dashboard-view min-h-screen bg-bg">
+  <div class="history-view min-h-screen bg-bg">
     <header class="flex items-center justify-between px-4 py-3 border-b border-border sticky top-0 bg-bg z-10">
       <button @click="router.back()" class="text-primary text-2xl p-2">←</button>
-      <h1 class="text-lg text-primary font-medium">📊 成就看板</h1>
+      <h1 class="text-lg text-primary font-medium">数据统计</h1>
       <div class="w-10"></div>
     </header>
 
     <main class="px-4 pb-6">
       <div v-if="loading" class="text-center py-12 text-tertiary">加载中...</div>
       <template v-else>
-        <!-- 统计卡片 -->
+        <!-- Statistics cards -->
         <section class="grid grid-cols-3 gap-3 py-4">
-          <div class="stat-card p-3 border border-border rounded-lg text-center">
+          <div class="stat-card p-3 border border-border rounded text-center transition-all duration-normal hover:bg-secondary/5">
             <div class="text-2xl font-bold text-primary">{{ statistics.totalCompleted }}</div>
             <div class="text-xs text-secondary mt-1">总完成</div>
           </div>
-          <div class="stat-card p-3 border border-border rounded-lg text-center">
+          <div class="stat-card p-3 border border-border rounded text-center transition-all duration-normal hover:bg-secondary/5">
             <div class="text-2xl font-bold text-primary">{{ statistics.thisWeekCompleted }}</div>
-            <div class="text-xs text-secondary mt-1">本周数</div>
+            <div class="text-xs text-secondary mt-1">本周</div>
           </div>
-          <div class="stat-card p-3 border border-border rounded-lg text-center">
+          <div class="stat-card p-3 border border-border rounded text-center transition-all duration-normal hover:bg-secondary/5">
             <div class="text-2xl font-bold text-primary">{{ statistics.consecutiveDays }}</div>
             <div class="text-xs text-secondary mt-1">连续天</div>
           </div>
         </section>
 
-        <!-- 最常完成 -->
+        <!-- Most frequent tasks -->
         <section v-if="statistics.mostFrequentTasks.length > 0" class="py-4">
-          <h2 class="text-primary font-medium mb-3">🔥 最常完成</h2>
-          <div class="border border-border rounded-lg divide-y divide-border">
+          <h2 class="text-primary font-medium mb-3">最常完成</h2>
+          <div class="border border-border rounded divide-y divide-border">
             <div
               v-for="(item, index) in statistics.mostFrequentTasks"
               :key="item.title"
-              class="flex items-center justify-between px-4 py-3"
+              class="flex items-center gap-3 px-4 py-3 group"
             >
-              <div class="flex items-center gap-3">
-                <span class="text-secondary w-6">{{ index + 1 }}.</span>
-                <span class="text-primary">{{ item.title }}</span>
-              </div>
+              <span class="text-secondary w-6 text-sm">{{ index + 1 }}.</span>
+              <span class="flex-1 text-primary truncate">{{ item.title }}</span>
               <span class="text-secondary text-sm">{{ item.count }}次</span>
             </div>
           </div>
         </section>
 
-        <!-- 历史记录 -->
+        <!-- All plans history -->
         <section class="py-4">
-          <h2 class="text-primary font-medium mb-3">📅 所有计划</h2>
-          <div v-if="history.length === 0" class="text-center py-8 text-tertiary border border-border rounded-lg">
+          <h2 class="text-primary font-medium mb-3">所有计划</h2>
+          <div v-if="history.length === 0" class="text-center py-8 text-tertiary border border-border rounded">
             暂无计划记录
           </div>
           <div v-else class="space-y-3">
             <div
               v-for="plan in sortedHistory"
               :key="plan.id"
-              class="history-card border border-border rounded-lg overflow-hidden"
+              class="history-card border border-border rounded overflow-hidden transition-all duration-normal hover:shadow-sm"
             >
-              <!-- 卡片头部 -->
+              <!-- Card header -->
               <div class="flex items-center justify-between px-4 py-3 bg-secondary/5">
                 <h3 class="text-primary font-medium">{{ getPlanTitle(plan) }}</h3>
                 <span class="text-secondary text-sm">
                   {{ getCompletedCount(plan) }}/{{ getTotalCount(plan) }}
                 </span>
               </div>
-              <!-- 任务列表 -->
+              <!-- Task list -->
               <div v-if="getAllTasks(plan).length > 0" class="px-4 pb-3">
                 <div class="space-y-1">
                   <div
                     v-for="task in getAllTasks(plan).slice(0, 5)"
                     :key="task.id"
-                    class="text-sm flex items-center gap-2 py-1"
+                    class="text-sm flex items-center gap-2 py-1 transition-colors duration-fast"
                     :class="task.completed ? 'text-tertiary line-through' : 'text-secondary'"
                   >
                     <span>{{ task.completed ? '✓' : '○' }}</span>
-                    <span>{{ task.title }}</span>
+                    <span class="truncate">{{ task.title }}</span>
                   </div>
                   <div v-if="getAllTasks(plan).length > 5" class="text-tertiary text-sm py-1">
                     ...还有 {{ getAllTasks(plan).length - 5 }} 项
@@ -107,7 +106,7 @@ const statistics = ref<Statistics>({
   mostFrequentTasks: []
 })
 
-// Use current plans from localStorage instead of IndexedDB
+// Use current plans from localStorage
 const history = computed(() => planStore.allPlans)
 
 const formatDate = (dateStr: string) => {
@@ -134,29 +133,26 @@ const getTotalCount = (plan: WeekendPlan): number => {
 // Sort history: today/tomorrow first, then by date
 const sortedHistory = computed(() => {
   return [...history.value].sort((a, b) => {
-    // Today and tomorrow come first
     if (a.planType === 'today') return -1
     if (b.planType === 'today') return 1
     if (a.planType === 'tomorrow') return -1
     if (b.planType === 'tomorrow') return 1
-    // Then by date (newest first)
     return new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
   })
 })
 
 const getPlanTitle = (plan: WeekendPlan): string => {
-  if (plan.planType === 'today') return '📆 今日计划'
-  if (plan.planType === 'tomorrow') return '📅 明日计划'
-  if (plan.planType === 'day_after') return '📅 后日计划'
-  if (plan.planType === 'this_week') return '📆 本周计划'
-  if (plan.planType === 'this_month') return '📆 本月计划'
+  if (plan.planType === 'today') return '今日计划'
+  if (plan.planType === 'tomorrow') return '明日计划'
+  if (plan.planType === 'day_after') return '后日计划'
+  if (plan.planType === 'this_week') return '本周计划'
+  if (plan.planType === 'this_month') return '本月计划'
   return formatDate(plan.startDate)
 }
 
 const loadHistory = async () => {
   loading.value = true
   try {
-    // 计算统计数据（使用当前的所有计划）
     statistics.value = await getStatistics(history.value)
   } catch (error) {
     console.error('Failed to load history:', error)
@@ -169,3 +165,13 @@ onMounted(() => {
   loadHistory()
 })
 </script>
+
+<style scoped>
+.stat-card {
+  transition: all 300ms ease-out;
+}
+
+.history-card {
+  transition: all 300ms ease-out;
+}
+</style>

@@ -35,8 +35,6 @@ describe('CurrentPlan Store (Multi-Plan)', () => {
       id: 'task-1',
       title: '跑步30分钟',
       completed: false,
-      points: 10,
-      priority: 1
     })
     expect(store.primaryPlan?.days[0].tasks).toHaveLength(1)
   })
@@ -48,8 +46,6 @@ describe('CurrentPlan Store (Multi-Plan)', () => {
       id: 'task-1',
       title: '跑步30分钟',
       completed: false,
-      points: 10,
-      priority: 1
     })
     store.toggleTask('task-1')
     expect(store.primaryPlan?.days[0].tasks[0].completed).toBe(true)
@@ -62,8 +58,6 @@ describe('CurrentPlan Store (Multi-Plan)', () => {
       id: 'task-1',
       title: '跑步30分钟',
       completed: false,
-      points: 10,
-      priority: 1
     })
     store.updateTaskNote('task-1', '公园慢跑')
     expect(store.primaryPlan?.days[0].tasks[0].note).toBe('公园慢跑')
@@ -76,8 +70,6 @@ describe('CurrentPlan Store (Multi-Plan)', () => {
       id: 'task-1',
       title: '跑步30分钟',
       completed: false,
-      points: 10,
-      priority: 1
     })
     store.removeTask('task-1')
     expect(store.primaryPlan?.days[0].tasks).toHaveLength(0)

@@ -12,18 +12,16 @@ describe('Minimalist Types', () => {
     expect(group.tasks).toHaveLength(2)
   })
 
-  it('should have Task type with simplified priority (number)', () => {
+  it('should have Task type with minimal structure', () => {
     const task: Task = {
       id: 'task-1',
       title: '跑步30分钟',
       note: '公园慢跑',
       completed: false,
-      groupId: 'group-1',
-      points: 10,
-      priority: 1
+      groupId: 'group-1'
     }
-    expect(task.points).toBe(10)
-    expect(task.priority).toBe(1)
+    expect(task.title).toBe('跑步30分钟')
+    expect(task.completed).toBe(false)
   })
 
   it('should have DayPlan type with simplified structure', () => {
