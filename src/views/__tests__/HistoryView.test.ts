@@ -5,6 +5,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import HistoryView from '../HistoryView.vue'
 import { getStatistics } from '@/utils/statistics'
+import { useCurrentPlanStore } from '@/stores/currentPlan'
 
 vi.mock('@/utils/statistics')
 
@@ -94,6 +95,10 @@ describe('HistoryView', () => {
   })
 
   it('should show empty state when no tasks', async () => {
+    // Create a today plan with empty tasks for the test
+    const planStore = useCurrentPlanStore()
+    planStore.ensureTodayPlan()
+
     const wrapper = mount(HistoryView, {
       global: {
         plugins: [router]
@@ -102,7 +107,7 @@ describe('HistoryView', () => {
 
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    // Today plan is created automatically, so we expect "暂无任务" for empty plan
+    // Today plan exists with empty tasks, so we expect "暂无任务"
     expect(wrapper.text()).toContain('暂无任务')
   })
 })

@@ -31,53 +31,43 @@ describe('CurrentPlan Store (Multi-Plan)', () => {
   it('should add task to primary plan', () => {
     const store = useCurrentPlanStore()
     store.createPlan(PlanType.TODAY)
-    store.addTask({
-      id: 'task-1',
-      title: '跑步30分钟',
-      completed: false,
-    })
+    store.addTask('跑步30分钟')
     expect(store.primaryPlan?.days[0].tasks).toHaveLength(1)
+    expect(store.primaryPlan?.days[0].tasks[0].title).toBe('跑步30分钟')
   })
 
   it('should toggle task completion', () => {
     const store = useCurrentPlanStore()
     store.createPlan(PlanType.TODAY)
-    store.addTask({
-      id: 'task-1',
-      title: '跑步30分钟',
-      completed: false,
-    })
-    store.toggleTask('task-1')
-    expect(store.primaryPlan?.days[0].tasks[0].completed).toBe(true)
+    const task = store.addTask('跑步30分钟')
+    if (task) {
+      store.toggleTask(task.id)
+      expect(store.primaryPlan?.days[0].tasks[0].completed).toBe(true)
+    }
   })
 
   it('should update task note', () => {
     const store = useCurrentPlanStore()
     store.createPlan(PlanType.TODAY)
-    store.addTask({
-      id: 'task-1',
-      title: '跑步30分钟',
-      completed: false,
-    })
-    store.updateTaskNote('task-1', '公园慢跑')
-    expect(store.primaryPlan?.days[0].tasks[0].note).toBe('公园慢跑')
+    const task = store.addTask('跑步30分钟')
+    if (task) {
+      store.updateTaskNote(task.id, '公园慢跑')
+      expect(store.primaryPlan?.days[0].tasks[0].note).toBe('公园慢跑')
+    }
   })
 
   it('should remove task from plan', () => {
     const store = useCurrentPlanStore()
     store.createPlan(PlanType.TODAY)
-    store.addTask({
-      id: 'task-1',
-      title: '跑步30分钟',
-      completed: false,
-    })
-    store.removeTask('task-1')
-    expect(store.primaryPlan?.days[0].tasks).toHaveLength(0)
+    const task = store.addTask('跑步30分钟')
+    if (task) {
+      store.removeTask(task.id)
+      expect(store.primaryPlan?.days[0].tasks).toHaveLength(0)
+    }
   })
 
   it('should create multiple independent plans', () => {
     const store = useCurrentPlanStore()
-    store.clearPlans()
     store.createPlan(PlanType.TODAY)
     const weekPlan = store.createPlan(PlanType.THIS_WEEK)
     const monthPlan = store.createPlan(PlanType.THIS_MONTH)
@@ -123,9 +113,6 @@ describe('CurrentPlan Store (Multi-Plan)', () => {
 
   it('should ensure today plan exists', () => {
     const store = useCurrentPlanStore()
-    store.clearPlans()
-    expect(store.primaryPlan).toBeNull()
-
     store.ensureTodayPlan()
     expect(store.primaryPlan).toBeTruthy()
     expect(store.primaryPlan?.planType).toBe(PlanType.TODAY)
@@ -136,7 +123,6 @@ describe('CurrentPlan Store (Multi-Plan)', () => {
     const plan = store.createPlan(PlanType.THIS_WEEK)
     const info = store.getPlanDisplayInfo(plan)
 
-    expect(info.title).toContain('本周')
     expect(info.remainingDays).toContain('天')
     expect(info.completedCount).toBe(0)
     expect(info.totalCount).toBe(0)

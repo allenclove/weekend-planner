@@ -165,7 +165,8 @@ const hasPlan = (type: PlanType): boolean => {
 }
 
 const selectPlanType = (type: PlanType, date?: string) => {
-  let plan = planStore.getPlanByType(type)
+  // For CUSTOM type, also check the date
+  let plan = planStore.getPlanByType(type, date)
 
   if (!plan) {
     // 创建新计划

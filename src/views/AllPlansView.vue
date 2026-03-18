@@ -13,10 +13,11 @@
 
       <div v-else class="space-y-3">
         <PlanCard
-          v-for="plan in planStore.allPlans"
+          v-for="(plan, index) in sortedPlans"
           :key="plan.id"
           :plan="plan"
           :is-primary="plan.id === planStore.primaryPlanId"
+          :card-index="index"
           @set-primary="planStore.setPrimaryPlan"
         />
       </div>
@@ -25,10 +26,18 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCurrentPlanStore } from '@/stores/currentPlan'
 import PlanCard from '@/components/PlanCard.vue'
 
 const router = useRouter()
 const planStore = useCurrentPlanStore()
+
+// 按日期排序
+const sortedPlans = computed(() => {
+  return [...planStore.allPlans].sort((a, b) => {
+    return new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+  })
+})
 </script>

@@ -106,8 +106,11 @@ const statistics = ref<Statistics>({
   mostFrequentTasks: []
 })
 
-// Use current plans from localStorage
-const history = computed(() => planStore.allPlans)
+// Use archived plans + current plans for full history
+const history = computed(() => {
+  // Show archived plans (past) + current plans
+  return [...planStore.archivedPlans, ...planStore.allPlans]
+})
 
 const formatDate = (dateStr: string) => {
   const d = new Date(dateStr)

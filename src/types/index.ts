@@ -27,6 +27,7 @@ export interface WeekendPlan {
   endDate: string
   days: DayPlan[]
   planType?: PlanType
+  archived?: boolean  // True if plan is archived to history
 }
 
 // Plan type enumeration

@@ -1,63 +1,29 @@
 <template>
-  <div class="plan-card border border-border rounded-lg overflow-hidden">
+  <div
+    class="plan-card border rounded-lg overflow-hidden"
+    :class="cardColorClass"
+  >
     <!-- 卡片头部 -->
     <div
-      class="plan-header flex items-center justify-between px-4 py-3"
-      :class="{ 'bg-secondary/5': !isPrimary, 'cursor-pointer': isMultiDay }"
+      class="plan-header flex items-center justify-between px-4 py-3 cursor-pointer"
       @click="handleHeaderClick"
     >
       <div class="flex items-center gap-3">
-        <span v-if="isMultiDay" class="text-primary transition-transform" :class="{ 'rotate-90': expanded }">▶</span>
-        <h3 class="text-primary font-medium">{{ displayInfo.title }}</h3>
+        <span class="text-primary transition-transform text-xs" :class="{ 'rotate-90': expanded }">▶</span>
+        <h3 class="text-primary font-medium">{{ displayTitle }}</h3>
       </div>
       <div class="flex items-center gap-3">
         <span class="text-secondary text-sm">{{ displayInfo.completedCount }}/{{ displayInfo.totalCount }}</span>
-        <button
-          v-if="!isPrimary"
-          @click.stop="setAsPrimary"
-          class="text-tertiary hover:text-primary text-sm px-2"
-          title="设为主计划"
-        >
-          ★
-        </button>
       </div>
     </div>
 
-    <!-- 日计划：显示任务列表 -->
-    <div v-if="!isMultiDay" class="plan-content px-4 pb-3">
-      <!-- 进度条 -->
-      <div class="pb-3">
-        <div class="h-px bg-secondary rounded overflow-hidden">
-          <div
-            class="h-full bg-primary transition-all duration-normal ease-out"
-            :style="{ width: `${progressPercentage}%` }"
-          ></div>
-        </div>
-      </div>
-
-      <!-- 任务列表 -->
-      <div>
-        <div v-if="plan.days[0].tasks.length === 0" class="text-center py-4 text-tertiary text-sm">
-          暂无任务
-        </div>
-        <TaskItemMinimal
-          v-for="task in plan.days[0].tasks"
-          :key="task.id"
-          :task="task"
-          :show-delete="true"
-          @toggle="handleToggleTask"
-          @delete="handleDeleteTask"
-        />
-      </div>
-    </div>
-
-    <!-- 周/月计划：平铺显示所有任务 -->
-    <div v-if="isMultiDay" class="expand-wrapper">
+    <!-- 任务列表：所有计划统一使用展开/折叠 -->
+    <div class="expand-wrapper">
       <Transition name="expand">
         <div v-show="expanded" class="plan-content px-4 pb-3">
           <!-- 进度条 -->
           <div class="pb-3">
-            <div class="h-px bg-secondary rounded overflow-hidden">
+            <div class="h-px bg-secondary/50 rounded overflow-hidden">
               <div
                 class="h-full bg-primary transition-all duration-normal ease-out"
                 :style="{ width: `${progressPercentage}%` }"
@@ -68,13 +34,13 @@
             </div>
           </div>
 
-          <!-- 平铺显示所有任务 -->
+          <!-- 任务列表 -->
           <div>
-            <div v-if="allTasks.length === 0" class="text-center py-4 text-tertiary text-sm">
+            <div v-if="displayTasks.length === 0" class="text-center py-4 text-tertiary text-sm">
               暂无任务
             </div>
             <TaskItemMinimal
-              v-for="task in allTasks"
+              v-for="task in displayTasks"
               :key="task.id"
               :task="task"
               :show-delete="true"
@@ -97,15 +63,41 @@ import TaskItemMinimal from './TaskItemMinimal.vue'
 
 const props = defineProps<{
   plan: WeekendPlan
-  isPrimary: boolean
-}>()
-
-const emit = defineEmits<{
-  setPrimary: [planId: string]
+  cardIndex: number
 }>()
 
 const planStore = useCurrentPlanStore()
-const expanded = ref(false) // 周/月计划默认不展开
+
+// 判断是否为多日计划（周/月）
+const isMultiDay = computed(() => {
+  return props.plan.planType === PlanType.THIS_WEEK || props.plan.planType === PlanType.THIS_MONTH
+})
+
+// Week/month plans default to collapsed, single-day plans default to expanded
+// 使用 computed 的默认值初始化，避免 watch 时机问题
+const expanded = ref(!isMultiDay.value)
+
+// 格式化日期显示
+const formatDate = (dateStr: string) => {
+  const d = new Date(dateStr)
+  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  const weekday = weekdays[d.getDay()]
+  const month = d.getMonth() + 1
+  const date = d.getDate()
+  return `${month}月${date}日 ${weekday}`
+}
+
+// 显示标题 - 优先显示具体日期
+const displayTitle = computed(() => {
+  if (props.plan.planType === PlanType.THIS_WEEK) {
+    return '本周计划'
+  }
+  if (props.plan.planType === PlanType.THIS_MONTH) {
+    return '本月计划'
+  }
+  // 对于单日计划，显示具体日期
+  return formatDate(props.plan.startDate)
+})
 
 const displayInfo = computed(() => {
   return planStore.getPlanDisplayInfo(props.plan)
@@ -116,13 +108,26 @@ const progressPercentage = computed(() => {
   return Math.round((displayInfo.value.completedCount / displayInfo.value.totalCount) * 100)
 })
 
-// 判断是否为多日计划（周/月）
-const isMultiDay = computed(() => {
-  return props.plan.planType === PlanType.THIS_WEEK || props.plan.planType === PlanType.THIS_MONTH
+// 根据索引添加轻微的颜色差异
+const cardColorClass = computed(() => {
+  const index = props.cardIndex
+  const colors = [
+    'border-blue-300 bg-blue-100',  // 浅蓝
+    'border-purple-300 bg-purple-100', // 浅紫
+    'border-green-300 bg-green-100',  // 浅绿
+    'border-orange-300 bg-orange-100', // 浅橙
+    'border-pink-300 bg-pink-100',    // 浅粉
+  ]
+  return colors[index % colors.length]
 })
 
-// 获取所有任务（平铺显示）
-const allTasks = computed(() => {
+// 获取所有任务（单日计划显示第一天，周/月计划平铺显示所有任务）
+const displayTasks = computed(() => {
+  // 单日计划只显示第一天的任务
+  if (!isMultiDay.value) {
+    return props.plan.days[0]?.tasks || []
+  }
+  // 周/月计划平铺显示所有任务
   const tasks: any[] = []
   for (const day of props.plan.days) {
     tasks.push(...day.tasks)
@@ -131,26 +136,14 @@ const allTasks = computed(() => {
 })
 
 const handleHeaderClick = () => {
-  if (isMultiDay.value) {
-    expanded.value = !expanded.value
-  }
-}
-
-const setAsPrimary = () => {
-  emit('setPrimary', props.plan.id)
+  expanded.value = !expanded.value
 }
 
 const handleToggleTask = (taskId: string) => {
-  if (!props.isPrimary) {
-    planStore.setPrimaryPlan(props.plan.id)
-  }
   planStore.toggleTask(taskId)
 }
 
 const handleDeleteTask = (taskId: string) => {
-  if (!props.isPrimary) {
-    planStore.setPrimaryPlan(props.plan.id)
-  }
   planStore.removeTask(taskId)
 }
 </script>

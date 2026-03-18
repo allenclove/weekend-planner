@@ -79,14 +79,21 @@ body {
 
 /* Checkbox styling */
 input[type="checkbox"] {
-  @apply w-5 h-5 border border-border rounded cursor-pointer;
+  @apply w-5 h-5 border-2 rounded cursor-pointer;
   @apply appearance-none checked:bg-primary checked:border-primary;
   @apply relative transition-colors duration-fast;
+  border-color: #999; /* 更深的边框 */
+  background-color: #fff;
+}
+
+input[type="checkbox"]:hover {
+  border-color: #666;
+  background-color: #fafafa;
 }
 
 input[type="checkbox"]::after {
   content: '✓';
-  @apply absolute text-white text-sm;
+  @apply absolute text-white text-sm font-medium;
   @apply top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2;
   @apply opacity-0 transition-opacity duration-fast;
 }
