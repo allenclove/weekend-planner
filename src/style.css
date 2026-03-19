@@ -29,11 +29,40 @@ body {
   background-color: var(--bg-primary);
 }
 
-/* Minimalist button */
+/* ===== Utility Classes ===== */
+
+/* Card */
+.card {
+  @apply border border-border rounded-md bg-bg;
+  @apply transition-shadow duration-normal;
+}
+
+/* Button */
+.button {
+  @apply px-md py-sm rounded-md border border-border;
+  @apply text-primary font-medium cursor-pointer;
+  @apply hover:bg-bg-secondary active:scale-95;
+  @apply transition-all duration-fast;
+}
+
+.button-primary {
+  @apply bg-primary text-bg border-primary;
+  @apply hover:bg-secondary;
+}
+
+/* Input */
+.input {
+  @apply w-full px-sm py-sm border border-border rounded-md;
+  @apply focus:outline-none focus:border-primary;
+  @apply bg-bg text-primary;
+  @apply transition-colors duration-fast;
+}
+
+/* Minimalist button (legacy) */
 .btn {
   @apply px-4 py-2 rounded border border-border bg-bg text-primary cursor-pointer;
   @apply hover:bg-bg-secondary active:scale-95;
-  @apply transition-all duration-150;
+  @apply transition-all duration-fast;
 }
 
 .btn-primary {
@@ -41,7 +70,7 @@ body {
   @apply hover:bg-secondary hover:border-secondary;
 }
 
-/* Minimalist input */
+/* Minimalist input (legacy) */
 .input {
   @apply w-full px-3 py-2 border border-border rounded;
   @apply focus:outline-none focus:border-primary;
@@ -50,18 +79,51 @@ body {
 
 /* Checkbox styling */
 input[type="checkbox"] {
-  @apply w-5 h-5 border border-border rounded cursor-pointer;
+  @apply w-5 h-5 border-2 rounded cursor-pointer;
   @apply appearance-none checked:bg-primary checked:border-primary;
-  @apply relative;
+  @apply relative transition-colors duration-fast;
+  border-color: #999; /* 更深的边框 */
+  background-color: #fff;
+}
+
+input[type="checkbox"]:hover {
+  border-color: #666;
+  background-color: #fafafa;
 }
 
 input[type="checkbox"]::after {
   content: '✓';
-  @apply absolute text-white text-sm;
+  @apply absolute text-white text-sm font-medium;
   @apply top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2;
-  @apply opacity-0;
+  @apply opacity-0 transition-opacity duration-fast;
 }
 
 input[type="checkbox"]:checked::after {
   @apply opacity-100;
+}
+
+/* ===== Animations ===== */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 200ms ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 300ms ease-out;
 }

@@ -2,25 +2,29 @@
 <template>
   <div class="home-view min-h-screen bg-bg">
     <header class="flex items-center justify-between px-4 py-3 border-b border-border sticky top-0 bg-bg z-10">
-      <h1 class="text-xl text-primary font-medium">{{ todayDate }}</h1>
+      <h1 class="text-xl text-primary font-medium">我的计划</h1>
       <button @click="showMenu = true" class="text-2xl text-primary p-2">⋯</button>
     </header>
 
+    <!-- Progress summary -->
+    <ProgressSummary />
+
     <main class="px-4 pb-20">
       <!-- 计划卡片列表 -->
-      <div class="space-y-3">
+      <div v-if="!showEmptyState" class="space-y-3">
         <PlanCard
-          v-for="plan in planStore.allPlans"
+          v-for="(plan, index) in sortedPlans"
           :key="plan.id"
           :plan="plan"
-          :is-primary="plan.id === planStore.primaryPlanId"
-          @set-primary="handleSetPrimary"
+          :card-index="index"
         />
       </div>
 
       <!-- 空状态 -->
-      <div v-if="planStore.allPlans.length === 0" class="text-center py-12 text-tertiary">
-        点击右下角 + 开始规划
+      <div v-else class="flex flex-col items-center justify-center py-20 text-tertiary">
+        <div class="text-6xl mb-4 opacity-30">📅</div>
+        <p class="text-lg mb-2">暂无计划</p>
+        <p class="text-sm opacity-60">点击 + 开始规划你的一天</p>
       </div>
     </main>
 
@@ -50,6 +54,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCurrentPlanStore } from '@/stores/currentPlan'
 import PlanCard from '@/components/PlanCard.vue'
+import ProgressSummary from '@/components/ProgressSummary.vue'
 import MenuModal from '@/components/MenuModal.vue'
 import PlanTypeSelector from '@/components/PlanTypeSelector.vue'
 
@@ -64,27 +69,29 @@ onMounted(() => {
   planStore.ensureTodayPlan()
 })
 
-// 今日日期显示
-const todayDate = computed(() => {
-  const d = new Date()
-  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-  const weekday = weekdays[d.getDay()]
-  const month = d.getMonth() + 1
-  const date = d.getDate()
-  return `${weekday} ${month}月${date}日`
+// 计划列表（已在 store 中按正确顺序排列：月→周→单日→自定义）
+// 过滤掉没有任务的单日计划
+const sortedPlans = computed(() => {
+  const plans = [...planStore.allPlans].filter(plan => {
+    // 保留周计划和月计划（即使没有任务）
+    if (plan.planType === 'this_week' || plan.planType === 'this_month') {
+      return true
+    }
+    // 单日计划：只有当有任务时才显示
+    const hasTasks = plan.days.some(day => day.tasks.length > 0)
+    return hasTasks
+  })
+  return plans
 })
 
-const handleSetPrimary = (planId: string) => {
-  planStore.setPrimaryPlan(planId)
-}
+// 是否显示空状态
+const showEmptyState = computed(() => sortedPlans.value.length === 0)
 
 const handleAddClick = () => {
-  // 点击加号总是打开计划类型选择器
   showPlanSelector.value = true
 }
 
 const handlePlanSelect = (planId: string) => {
-  // 设置为主计划，然后跳转到任务选择
   planStore.setPrimaryPlan(planId)
   router.push('/select-tasks')
 }

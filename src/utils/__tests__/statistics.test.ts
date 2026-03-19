@@ -13,9 +13,9 @@ describe('statistics', () => {
         {
           date: '2024-03-15',
           tasks: [
-            { id: 't1', title: '看书', completed: true, points: 10, priority: 1 },
-            { id: 't2', title: '运动', completed: true, points: 10, priority: 1 },
-            { id: 't3', title: '学习', completed: false, points: 10, priority: 1 }
+            { id: 't1', title: '看书', completed: true },
+            { id: 't2', title: '运动', completed: true },
+            { id: 't3', title: '学习', completed: false }
           ]
         }
       ]
@@ -28,8 +28,8 @@ describe('statistics', () => {
         {
           date: '2024-03-14',
           tasks: [
-            { id: 't4', title: '看书', completed: true, points: 10, priority: 1 },
-            { id: 't5', title: '运动', completed: true, points: 10, priority: 1 }
+            { id: 't4', title: '看书', completed: true },
+            { id: 't5', title: '运动', completed: true }
           ]
         }
       ]

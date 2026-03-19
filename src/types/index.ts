@@ -5,15 +5,13 @@ export interface TaskGroup {
   tasks: string[]
 }
 
-// Simplified task without category, priority is a number
+// Simplified task - minimal structure
 export interface Task {
   id: string
   title: string
   note?: string
   completed: boolean
   groupId?: string
-  points: number
-  priority: number
 }
 
 // Simplified day plan without daily goal or reward
@@ -29,6 +27,7 @@ export interface WeekendPlan {
   endDate: string
   days: DayPlan[]
   planType?: PlanType
+  archived?: boolean  // True if plan is archived to history
 }
 
 // Plan type enumeration
@@ -39,21 +38,6 @@ export enum PlanType {
   THIS_WEEK = 'this_week',
   THIS_MONTH = 'this_month',
   CUSTOM = 'custom'
-}
-
-// Combo state for tracking consecutive task completions
-export interface ComboState {
-  count: number
-  maxCount: number
-  lastResetAt: number
-}
-
-// Completion effect data for gamification
-export interface CompletionEffect {
-  show: boolean
-  points: number
-  stars: number
-  combo: number
 }
 
 // Data export structure with task groups

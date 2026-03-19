@@ -1,47 +1,48 @@
 // src/views/__tests__/HistoryView.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
+import { createRouter, createMemoryHistory } from 'vue-router'
 import HistoryView from '../HistoryView.vue'
-import { getAllPlans } from '@/stores/database'
 import { getStatistics } from '@/utils/statistics'
+import { useCurrentPlanStore } from '@/stores/currentPlan'
 
-vi.mock('@/stores/database')
 vi.mock('@/utils/statistics')
 
 describe('HistoryView', () => {
+  let router: any
+
   beforeEach(() => {
+    setActivePinia(createPinia())
     vi.clearAllMocks()
     // 设置默认 mock
-    vi.mocked(getAllPlans).mockResolvedValue([])
     vi.mocked(getStatistics).mockResolvedValue({
       totalCompleted: 0,
       thisWeekCompleted: 0,
       consecutiveDays: 0,
       mostFrequentTasks: []
     })
+    // Create router
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { template: '<div>Home</div>' } },
+        { path: '/history', component: HistoryView }
+      ]
+    })
+    router.push('/history')
   })
 
-  it('should render dashboard title', () => {
+  it('should render statistics title', () => {
     const wrapper = mount(HistoryView, {
       global: {
-        stubs: {
-          RouterLink: true
-        }
+        plugins: [router]
       }
     })
-    expect(wrapper.text()).toContain('📊 成就看板')
+    expect(wrapper.text()).toContain('数据统计')
   })
 
   it('should display statistics cards', async () => {
-    const mockPlans = [
-      {
-        id: 'plan-1',
-        startDate: '2024-03-15',
-        days: [{ date: '2024-03-15', tasks: [] }],
-        savedAt: Date.now()
-      }
-    ]
-
     const mockStats = {
       totalCompleted: 100,
       thisWeekCompleted: 12,
@@ -52,14 +53,11 @@ describe('HistoryView', () => {
       ]
     }
 
-    vi.mocked(getAllPlans).mockResolvedValue(mockPlans as any)
     vi.mocked(getStatistics).mockResolvedValue(mockStats)
 
     const wrapper = mount(HistoryView, {
       global: {
-        stubs: {
-          RouterLink: true
-        }
+        plugins: [router]
       }
     })
 
@@ -71,15 +69,6 @@ describe('HistoryView', () => {
   })
 
   it('should display most frequent tasks', async () => {
-    const mockPlans = [
-      {
-        id: 'plan-1',
-        startDate: '2024-03-15',
-        days: [{ date: '2024-03-15', tasks: [] }],
-        savedAt: Date.now()
-      }
-    ]
-
     const mockStats = {
       totalCompleted: 100,
       thisWeekCompleted: 12,
@@ -90,35 +79,35 @@ describe('HistoryView', () => {
       ]
     }
 
-    vi.mocked(getAllPlans).mockResolvedValue(mockPlans as any)
     vi.mocked(getStatistics).mockResolvedValue(mockStats)
 
     const wrapper = mount(HistoryView, {
       global: {
-        stubs: {
-          RouterLink: true
-        }
+        plugins: [router]
       }
     })
 
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    expect(wrapper.text()).toContain('🔥 最常完成')
+    expect(wrapper.text()).toContain('最常完成')
     expect(wrapper.text()).toContain('看书')
     expect(wrapper.text()).toContain('8次')
   })
 
-  it('should show empty state when no history', async () => {
+  it('should show empty state when no tasks', async () => {
+    // Create a today plan with empty tasks for the test
+    const planStore = useCurrentPlanStore()
+    planStore.ensureTodayPlan()
+
     const wrapper = mount(HistoryView, {
       global: {
-        stubs: {
-          RouterLink: true
-        }
+        plugins: [router]
       }
     })
 
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    expect(wrapper.text()).toContain('暂无历史记录')
+    // Today plan exists with empty tasks, so we expect "暂无任务"
+    expect(wrapper.text()).toContain('暂无任务')
   })
 })
